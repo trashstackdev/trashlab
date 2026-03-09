@@ -23,6 +23,3 @@ spec:
       defaultReplicaCount: 1
     persistence:
       defaultClassReplicaCount: 1
-    metrics:
-      serviceMonitor:
-        enabled: true
