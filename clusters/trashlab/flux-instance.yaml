@@ -24,3 +24,15 @@ spec:
     ref: refs/heads/main
     path: clusters/trashlab
     pullSecret: flux-system
+  kustomize:
+    patches:
+      - patch: |
+          - op: add
+            path: /spec/decryption
+            value:
+              provider: sops
+              secretRef:
+                name: sops-age
+        target:
+          kind: Kustomization
+          labelSelector: "app.kubernetes.io/part-of=flux"
