@@ -7,6 +7,8 @@ metadata:
 spec:
   interval: 1h
   releaseName: external-secrets
+  install:
+    createNamespace: true
   chart:
     spec:
       chart: external-secrets
