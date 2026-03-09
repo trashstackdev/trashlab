@@ -7,8 +7,14 @@ metadata:
 spec:
   interval: 1h
   releaseName: external-secrets
+  timeout: 10m
   install:
     createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
   chart:
     spec:
       chart: external-secrets
