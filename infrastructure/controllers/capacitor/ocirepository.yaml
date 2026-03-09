@@ -8,4 +8,4 @@ spec:
   interval: 12h
   url: oci://ghcr.io/gimlet-io/capacitor
   ref:
-    tag: v2025-12.1
+    tag: v0.4.8
