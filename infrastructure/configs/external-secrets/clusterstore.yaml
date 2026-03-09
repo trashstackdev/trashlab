@@ -1,0 +1,38 @@
+apiVersion: ENC[AES256_GCM,data:6XWqpJ4HUq3ooGCZsVTk5GIAvVWlbw==,iv:dhCtLamHH13L0lGOsTs0ZJ8UASWIw8ctcBrMtBIZy70=,tag:9eqYQj3MRTkZxdUfxDRJJw==,type:str]
+kind: ENC[AES256_GCM,data:c7iF5O5t6/ZbEd0hC14IjBMF,iv:c+BZfMhWMVtYQm2BfOSAGi5kX2jEQqJQOiycFqjr7K4=,tag:y4UvqCHKM6urX6J46fkaQQ==,type:str]
+metadata:
+    name: ENC[AES256_GCM,data:7W0pG+li+v5x,iv:bDoqTvyckMHl+biiEvBfj4AMI2HV7ANDbu3ooWxo2mA=,tag:gRamr4t3mhFTuFHhJ6N7tQ==,type:str]
+spec:
+    provider:
+        bitwardensecretsmanager:
+            apiURL: ENC[AES256_GCM,data:DRNvFpV4YW0hJ8VIjZVywhM/qPxQH+nzMA==,iv:b9yiLtDbYF2p8IG6hIOIYp2NoiJ9SPB4unnsTNhk77I=,tag:iL7Biatk50CA8eaVH1zKDg==,type:str]
+            identityURL: ENC[AES256_GCM,data:/EU82zdNDnxd5Il9KimvVPeE5iwcOYTR7cWdacOY,iv:B5p2be4UrcKmTmiTzxmCO8zR0EES02fHHOE7OckLjys=,tag:zPYs7vJHOCJFz0sITDmaNA==,type:str]
+            bitwardenServerSDKURL: ENC[AES256_GCM,data:2NaJiLJlKYiLmGOk5a0nwtwUtTdsAOkA7BqEkvmA/qaNMh2q+7k1Ruhhez0JPnLh727N3bEbn/lEsQ3+9nnLU8A7cj0=,iv:3tQh+snC9rTvmLy4J/QuTaat2JHc09BN6v4Wg89uliM=,tag:I5pQwr4dV42yQlgtSWKMPg==,type:str]
+            organizationID: ENC[AES256_GCM,data:UjunMzpibZBTNr3ULz50GYQhzZuKFzhwgkzV6R/tQYK5gcV4,iv:QT2pKLLXxzoSPhmHy8cI++4xiD28i3DpghPtEPT+XYY=,tag:9B5b7SbV08T3M7kUq8oZYQ==,type:str]
+            projectID: ENC[AES256_GCM,data:48ps1Wi7rB3mtWXhrf5wAp3lk5MVDLOnrOJEdRiqrwuaCJAK,iv:b1hexXbwIK5AgxGWKYXtYLz54ry2MxaG6aL8ZUxLQA0=,tag:GpGCB0h52Vc9gpS+UTB+OQ==,type:str]
+            auth:
+                secretRef:
+                    credentials:
+                        name: ENC[AES256_GCM,data:DxQyRsb+hHHlg0xOdDW7kxar,iv:V7mlB/L3efQKVaD+QecuMmmBC+WOyjCqsm8AL5kif98=,tag:DO7TBI+mT1ti/Ip4MDFIcA==,type:str]
+                        namespace: ENC[AES256_GCM,data:ud1cxJZQKN0Pjy9XoP0mig==,iv:7Zqjq95WdMvBlC0QQ7VmXrl1KYthPoGBe2IhUjETvrs=,tag:U/fcKFsSu7FN9Z7t3yRlEw==,type:str]
+                        key: ENC[AES256_GCM,data:NDEb1rQ=,iv:kE2ec55WXS0/vfN3HAKZR6u08dn7lrPYvRooumuZl8w=,tag:k95AnfuliYssfHAf+4k7dw==,type:str]
+            caProvider:
+                type: ENC[AES256_GCM,data:UUkBZvvk,iv:EZy9KaTlnRQbN7oSmHTv6UHvfeCw1ykdyt3mhz9OzYA=,tag:CB6nag+QOg4k8xpekV6cfw==,type:str]
+                name: ENC[AES256_GCM,data:SzvR3Vl92hrgsQy3TRXrClzNMg==,iv:kcbQ9iU2ChFOih07riRW6LFSlcz0+VEoCEb0QoIIRsg=,tag:pKmAnMnYufz41S16mTGOQg==,type:str]
+                namespace: ENC[AES256_GCM,data:EgTHqnzsqC32fCptxliMOg==,iv:sY1SoKNg77YMLDDBmta0tOphT7VrmKjrsoCxnW/BH34=,tag:VWMTKfWRAS9A9bW0nvUrQQ==,type:str]
+                key: ENC[AES256_GCM,data:/Muaul3+,iv:/hJX3fPAKG0QLSqFQf0hTZ9Upf54pRrAb4stY0swKOM=,tag:lHYB4ha1uw5LEm87salDnA==,type:str]
+sops:
+    age:
+        - recipient: age1guwhf7ux6kphahck7gpulsjcwc58w8uv8y4s2wpsh7cpjhae6yzqa8l2dh
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB5RWJsYTNVdVQ3ZEd4b2xj
+            czlUQVIrenBqdEg3L2RrakIvMUZFVW5xWUhJCjRtb2FobDZLRTVadjFrNlZoK0NO
+            ZEhaUCtjQjl3RnFhQlZ3ZFpjRGU2MEUKLS0tIC9vS04zWllhV05PMExTcklxY29N
+            elBtM2ZFRVBkWkdhWlpONmVEKzJ4dTAK7TMCPXsa9jb/xFC2B+ItQIbKMN57zL4w
+            SjFEAiLACWrNCasO2OzRnfndD9mWZMcY+f2M/DuHLFOU+ORypA/Bvw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-03-09T21:44:28Z"
+    mac: ENC[AES256_GCM,data:5Q9UuPikdAVnlEG+WVAuiiFk2CsHCEgK3d505uq7P4ghKTMdGudmZwCM83YXmTvcnrm/ctQMpCGQ/QQRjSzGYt7cftA42idPkfA63O7HQzkXorKmWy9l+if9NM/vtfkmt6Ez+zLz/BKf7uUe3nKihpqWelbsO0L7mlrF6TmohPk=,iv:fXdRCm+V0qxxn/foGa0c2a26Nm38d/T8oP4fzpr4Vpo=,tag:uUmVl5l3Aj0Lnhuz1GhT8A==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.12.1
