@@ -10,8 +10,10 @@ spec:
   eventSeverity: error
   eventSources:
     - kind: HelmRelease
+      name: "*"
       namespace: "*"
     - kind: Kustomization
+      name: "*"
       namespace: "*"
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
@@ -25,8 +27,10 @@ spec:
   eventSeverity: info
   eventSources:
     - kind: HelmRelease
+      name: "*"
       namespace: "*"
     - kind: Kustomization
+      name: "*"
       namespace: "*"
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
@@ -40,6 +44,8 @@ spec:
   eventSeverity: info
   eventSources:
     - kind: HelmRelease
+      name: "*"
       namespace: "*"
     - kind: Kustomization
+      name: "*"
       namespace: "*"
