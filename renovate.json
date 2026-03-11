@@ -27,18 +27,7 @@
       ],
       "depNameTemplate": "nextcloud",
       "datasourceTemplate": "docker",
-      "registryUrlTemplate": "https://hub.docker.com"
-    },
-    {
-      "description": "PostgreSQL image tag in Nextcloud",
-      "customType": "regex",
-      "fileMatch": ["apps/nextcloud/helmrelease\\.yaml"],
-      "matchStrings": [
-        "tag: (?<currentValue>[\\d.]+-debian-[\\d]+-r[\\d]+)"
-      ],
-      "depNameTemplate": "bitnami/postgresql",
-      "datasourceTemplate": "docker",
-      "registryUrlTemplate": "https://hub.docker.com"
+      "registryUrlTemplate": "https://index.docker.io"
     }
   ]
 }
