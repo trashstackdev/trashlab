@@ -58,6 +58,7 @@ spec:
         tag: 16.3.0-debian-12-r10
       primary:
         persistence:
+          enabled: true
           storageClass: longhorn
 
     redis:
