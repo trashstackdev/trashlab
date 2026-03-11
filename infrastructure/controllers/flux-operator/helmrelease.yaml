@@ -7,6 +7,8 @@ metadata:
 spec:
   interval: 1h
   releaseName: flux-operator
+  upgrade:
+    crds: CreateReplace
   chartRef:
     kind: OCIRepository
     name: flux-operator
