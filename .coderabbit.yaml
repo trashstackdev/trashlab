@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  profile: chill
+  poem: false
+  review_status: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - ".*"
+  path_instructions:
+    - path: "**/*.yaml"
+      instructions: |
+        This is a GitOps repository managing a k3s cluster via Flux Operator.
+        All secrets must be SOPS-encrypted or referenced via secretKeyRef/existingSecret — never plaintext.
+        Never suggest running helm upgrade or kubectl apply directly; all changes go through git.
+        HelmRelease chart versions must be pinned to exact versions, not ranges.
+        All HelmReleases must have upgrade.crds: CreateReplace.
