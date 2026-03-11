@@ -1,0 +1,132 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nextcloud
+  namespace: nextcloud
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: nextcloud
+      version: "8.9.1"
+      sourceRef:
+        kind: HelmRepository
+        name: nextcloud
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    global:
+      security:
+        allowInsecureImages: true
+
+    image:
+      tag: 33.0.0-apache
+
+    nextcloud:
+      host: cloud.c930.net
+      existingSecret:
+        enabled: true
+        secretName: nextcloud
+        usernameKey: nextcloud-username
+        passwordKey: nextcloud-password
+      extraEnv:
+        - name: OVERWRITEPROTOCOL
+          value: https
+        - name: OVERWRITEHOST
+          value: cloud.c930.net
+        - name: overwrite.cli.url
+          value: https://cloud.c930.net
+        - name: TRUSTED_PROXIES
+          value: 5.9.57.177
+        - name: APACHE_DISABLE_REWRITE_IP
+          value: "1"
+      phpConfigs:
+        opcache.interned_strings_buffer: "10"
+
+    internalDatabase:
+      enabled: false
+
+    postgresql:
+      enabled: true
+      global:
+        postgresql:
+          auth:
+            database: nextcloud
+            username: nextcloud
+            existingSecret: nextcloud-postgresql
+            secretKeys:
+              adminPasswordKey: postgres-password
+              userPasswordKey: password
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/postgresql
+        tag: 16.3.0-debian-12-r10
+      primary:
+        persistence:
+          enabled: true
+          storageClass: longhorn
+
+    redis:
+      enabled: true
+      auth:
+        enabled: true
+        existingSecret: nextcloud-redis
+        existingSecretPasswordKey: redis-password
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/redis
+      replica:
+        replicaCount: 0
+
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      accessMode: ReadWriteOnce
+      size: 50Gi
+
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+        traefik.ingress.kubernetes.io/router.middlewares: nextcloud-nextcloud-chain@kubernetescrd
+      tls:
+        - hosts:
+            - cloud.c930.net
+          secretName: nextcloud-tls
+
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 6
+      successThreshold: 1
+
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 6
+      successThreshold: 1
+
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 60
+      successThreshold: 1
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+
+    metrics:
+      enabled: false
