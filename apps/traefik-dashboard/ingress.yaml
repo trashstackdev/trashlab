@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-dashboard
+  namespace: kube-system
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-traefik-dashboard-auth@kubernetescrd
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  rules:
+    - host: traefik.c930.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik-dashboard
+                port:
+                  number: 9000
+  tls:
+    - hosts:
+        - traefik.c930.net
+      secretName: traefik-c930-net-tls
