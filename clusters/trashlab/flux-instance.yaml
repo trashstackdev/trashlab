@@ -20,7 +20,7 @@ spec:
     type: kubernetes
   sync:
     kind: GitRepository
-    url: https://github.com/930C/homelab
+    url: https://github.com/trashstackdev/trashlab
     ref: refs/heads/main
     path: clusters/trashlab
     pullSecret: flux-system
