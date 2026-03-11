@@ -5,6 +5,8 @@ metadata:
   name: traefik
   namespace: kube-system
 spec:
+  upgrade:
+    crds: CreateReplace
   chart:
     spec:
       chart: traefik

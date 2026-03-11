@@ -5,6 +5,8 @@ metadata:
   name: longhorn
   namespace: longhorn-system
 spec:
+  upgrade:
+    crds: CreateReplace
   chart:
     spec:
       chart: longhorn

@@ -5,6 +5,8 @@ metadata:
   name: cert-manager
   namespace: cert-manager
 spec:
+  upgrade:
+    crds: CreateReplace
   chart:
     spec:
       chart: cert-manager
