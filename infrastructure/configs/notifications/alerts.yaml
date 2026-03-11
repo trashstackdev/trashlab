@@ -1,0 +1,45 @@
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: discord-alerts
+  namespace: flux-system
+spec:
+  providerRef:
+    name: discord-alerts
+  eventSeverity: error
+  eventSources:
+    - kind: HelmRelease
+      namespace: "*"
+    - kind: Kustomization
+      namespace: "*"
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: discord-audit
+  namespace: flux-system
+spec:
+  providerRef:
+    name: discord-audit
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      namespace: "*"
+    - kind: Kustomization
+      namespace: "*"
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: github
+  namespace: flux-system
+spec:
+  providerRef:
+    name: github
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      namespace: "*"
+    - kind: Kustomization
+      namespace: "*"
