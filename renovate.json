@@ -1,6 +1,44 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended"],
+  "flux": {
+    "fileMatch": ["\\.yaml$"]
+  },
+  "packageRules": [
+    {
+      "description": "Group Flux component updates",
+      "matchPackageNames": ["ghcr.io/fluxcd/**"],
+      "groupName": "flux"
+    },
+    {
+      "description": "Require manual approval for major chart version bumps",
+      "matchManagers": ["flux"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Nextcloud image tag",
+      "customType": "regex",
+      "fileMatch": ["apps/nextcloud/helmrelease\\.yaml"],
+      "matchStrings": [
+        "tag: (?<currentValue>[\\d.]+-apache)"
+      ],
+      "depNameTemplate": "nextcloud",
+      "datasourceTemplate": "docker",
+      "registryUrlTemplate": "https://hub.docker.com"
+    },
+    {
+      "description": "PostgreSQL image tag in Nextcloud",
+      "customType": "regex",
+      "fileMatch": ["apps/nextcloud/helmrelease\\.yaml"],
+      "matchStrings": [
+        "tag: (?<currentValue>[\\d.]+-debian-[\\d]+-r[\\d]+)"
+      ],
+      "depNameTemplate": "bitnami/postgresql",
+      "datasourceTemplate": "docker",
+      "registryUrlTemplate": "https://hub.docker.com"
+    }
   ]
 }
