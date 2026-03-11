@@ -11,10 +11,8 @@ spec:
   eventSources:
     - kind: HelmRelease
       name: "*"
-      namespace: "*"
     - kind: Kustomization
       name: "*"
-      namespace: "*"
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
@@ -28,10 +26,8 @@ spec:
   eventSources:
     - kind: HelmRelease
       name: "*"
-      namespace: "*"
     - kind: Kustomization
       name: "*"
-      namespace: "*"
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
@@ -45,7 +41,5 @@ spec:
   eventSources:
     - kind: HelmRelease
       name: "*"
-      namespace: "*"
     - kind: Kustomization
       name: "*"
-      namespace: "*"
