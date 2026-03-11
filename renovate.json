@@ -15,6 +15,13 @@
       "matchManagers": ["flux"],
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Limit Longhorn to one minor version bump at a time",
+      "matchPackageNames": ["longhorn"],
+      "matchManagers": ["flux"],
+      "matchDatasources": ["helm"],
+      "allowedVersions": "<={{major}}.{{add minor 1}}"
     }
   ],
   "customManagers": [
