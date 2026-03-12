@@ -2,6 +2,16 @@
 
 My GitOps configuration for a single-node k3s cluster on a Hetzner EX44, managed by [Flux Operator](https://fluxoperator.dev).
 
+## Services
+
+| Service | URL | Auth |
+|---|---|---|
+| Authentik | https://auth.trashstack.dev | — |
+| Flux UI | https://flux.trashstack.dev | ForwardAuth (Authentik) |
+| Traefik Dashboard | https://traefik.trashstack.dev | Basic auth |
+| Nextcloud | https://cloud.trashstack.dev | Nextcloud built-in |
+| Bluemap | https://bluemap.trashstack.dev | None |
+
 ## Stack
 
 | Component | Purpose |
@@ -12,6 +22,7 @@ My GitOps configuration for a single-node k3s cluster on a Hetzner EX44, managed
 | cert-manager | TLS via Let's Encrypt |
 | Longhorn | Persistent block storage |
 | External Secrets | Secrets from Bitwarden SM |
+| Authentik | SSO / ForwardAuth |
 
 ## Structure
 
