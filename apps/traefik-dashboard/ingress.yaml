@@ -22,4 +22,4 @@ spec:
   tls:
     - hosts:
         - traefik.trashstack.dev
-      secretName: traefik-c930-net-tls
+      secretName: traefik-trashstack-dev-tls
