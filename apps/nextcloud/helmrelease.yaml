@@ -24,7 +24,7 @@ spec:
     image:
       tag: 33.0.0-apache
     nextcloud:
-      host: cloud.c930.net
+      host: cloud.trashstack.dev
       existingSecret:
         enabled: true
         secretName: nextcloud
@@ -32,9 +32,9 @@ spec:
         - name: OVERWRITEPROTOCOL
           value: https
         - name: OVERWRITEHOST
-          value: cloud.c930.net
+          value: cloud.trashstack.dev
         - name: overwrite.cli.url
-          value: https://cloud.c930.net
+          value: https://cloud.trashstack.dev
         - name: TRUSTED_PROXIES
           value: 5.9.57.177
         - name: APACHE_DISABLE_REWRITE_IP
@@ -81,7 +81,7 @@ spec:
         traefik.ingress.kubernetes.io/router.middlewares: nextcloud-nextcloud-chain@kubernetescrd
       tls:
         - hosts:
-            - cloud.c930.net
+            - cloud.trashstack.dev
           secretName: nextcloud-tls
 
     resources:
