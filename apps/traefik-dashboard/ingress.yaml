@@ -9,7 +9,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
   rules:
-    - host: traefik.c930.net
+    - host: traefik.trashstack.dev
       http:
         paths:
           - path: /
@@ -21,5 +21,5 @@ spec:
                   number: 9000
   tls:
     - hosts:
-        - traefik.c930.net
-      secretName: traefik-c930-net-tls
+        - traefik.trashstack.dev
+      secretName: traefik-trashstack-dev-tls

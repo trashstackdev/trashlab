@@ -8,7 +8,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
   rules:
-    - host: bluemap.c930.net
+    - host: bluemap.trashstack.dev
       http:
         paths:
           - path: /
@@ -20,5 +20,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - bluemap.c930.net
+        - bluemap.trashstack.dev
       secretName: bluemap-tls
