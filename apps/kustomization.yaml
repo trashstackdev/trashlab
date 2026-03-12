@@ -4,5 +4,6 @@ resources:
   - authentik
   - bluemap
   - flux-ui
+  - longhorn-ui
   - nextcloud
   - traefik-dashboard
