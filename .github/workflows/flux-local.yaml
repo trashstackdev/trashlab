@@ -100,7 +100,7 @@ jobs:
 
       - name: Add Comment
         if: ${{ steps.diff.outputs.diff != '' }}
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           header: ${{ github.event.pull_request.number }}/kubernetes/${{ matrix.resource }}
