@@ -35,6 +35,7 @@ resource "authentik_application" "nextcloud" {
   name              = "Nextcloud"
   slug              = "nextcloud"
   protocol_provider = authentik_provider_oauth2.nextcloud.id
+  meta_icon = "https://nextcloud.com/c/uploads/2022/11/logo_nextcloud_white.svg"
 }
 
 resource "authentik_outpost" "embedded" {
@@ -46,7 +47,7 @@ resource "authentik_outpost" "embedded" {
     authentik_provider_proxy.longhorn_ui.id,
   ]
   config = jsonencode({
-    authentik_host       = "https://auth.trashstack.dev"
+    authentik_host       = var.authentik_url
     kubernetes_namespace = "authentik"
     kubernetes_replicas  = 1
     log_level            = "info"
