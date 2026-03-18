@@ -5,7 +5,7 @@ metadata:
   namespace: kube-system
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-traefik-dashboard-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: flux-system-authentik-forward-auth@kubernetescrd
     cert-manager.io/cluster-issuer: letsencrypt-production
 spec:
   rules:

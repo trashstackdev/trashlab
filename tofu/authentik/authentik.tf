@@ -31,6 +31,12 @@ resource "authentik_application" "longhorn_ui" {
   meta_icon         = "https://raw.githubusercontent.com/cncf/artwork/3e09078b447395d14093989e8718bf3b115b5101/projects/longhorn/icon/color/longhorn-icon-color.svg"
 }
 
+resource "authentik_application" "traefik_dashboard" {
+  name              = "Traefik Dashboard"
+  slug              = "traefik-dashboard"
+  protocol_provider = authentik_provider_proxy.traefik_dashboard.id
+}
+
 resource "authentik_application" "nextcloud" {
   name              = "Nextcloud"
   slug              = "nextcloud"
@@ -45,6 +51,7 @@ resource "authentik_outpost" "embedded" {
   protocol_providers = [
     authentik_provider_proxy.flux_ui.id,
     authentik_provider_proxy.longhorn_ui.id,
+    authentik_provider_proxy.traefik_dashboard.id,
   ]
   config = jsonencode({
     authentik_host       = var.authentik_url

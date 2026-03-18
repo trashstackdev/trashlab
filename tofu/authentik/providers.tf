@@ -20,6 +20,17 @@ resource "authentik_provider_proxy" "longhorn_ui" {
   access_token_validity = "hours=24"
 }
 
+# ForwardAuth proxy provider for Traefik Dashboard
+resource "authentik_provider_proxy" "traefik_dashboard" {
+  name                  = "traefik-dashboard"
+  external_host         = "https://traefik.trashstack.dev"
+  mode                  = "forward_single"
+  authorization_flow    = data.authentik_flow.implicit_consent.id
+  invalidation_flow     = data.authentik_flow.invalidation.id
+  property_mappings     = data.authentik_property_mapping_provider_scope.proxy_scopes.ids
+  access_token_validity = "hours=24"
+}
+
 # OAuth2/OIDC provider for Nextcloud
 resource "authentik_provider_oauth2" "nextcloud" {
   name               = "Nextcloud"
