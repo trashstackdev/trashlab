@@ -12,7 +12,7 @@ spec:
     - host: traefik.trashstack.dev
       http:
         paths:
-          - path: /dashboard
+          - path: /
             pathType: Prefix
             backend:
               service:

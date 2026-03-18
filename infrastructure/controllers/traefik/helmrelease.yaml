@@ -19,6 +19,8 @@ spec:
   interval: 1m0s
   releaseName: traefik
   values:
+    api:
+      insecure: true
     providers:
       kubernetesCRD:
         allowCrossNamespace: true
