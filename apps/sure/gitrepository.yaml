@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: sure
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://github.com/we-promise/sure
+  ref:
+    tag: v0.6.9-alpha.6

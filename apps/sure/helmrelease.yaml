@@ -1,0 +1,64 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: sure
+  namespace: sure
+spec:
+  interval: 1h
+  upgrade:
+    crds: CreateReplace
+  chart:
+    spec:
+      chart: charts/sure
+      version: 0.6.9-alpha.6
+      sourceRef:
+        kind: GitRepository
+        name: sure
+        namespace: flux-system
+  values:
+    rails:
+      existingSecret: sure-secret
+      settings:
+        SELF_HOSTED: "true"
+        ONBOARDING_STATE: "open"
+        AI_DEBUG_MODE: "false"
+        AUTH_LOCAL_LOGIN_ENABLED: "false"
+        AUTH_LOCAL_ADMIN_OVERRIDE_ENABLED: "true"
+      extraEnv:
+        OIDC_ISSUER: "https://auth.trashstack.dev/application/o/sure/"
+        OIDC_REDIRECT_URI: "https://sure.trashstack.dev/auth/openid_connect/callback"
+        RAILS_ASSUME_SSL: "true"
+        FORCE_SSL: "true"
+
+    cnpg:
+      enabled: false
+      cluster:
+        enabled: true
+        instances: 1
+        storage:
+          size: 10Gi
+          storageClassName: longhorn
+
+    redisOperator:
+      enabled: false
+
+    redisSimple:
+      enabled: true
+      auth:
+        existingSecret: sure-secret
+        passwordKey: redis-password
+
+    ingress:
+      enabled: true
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        cert-manager.io/cluster-issuer: letsencrypt-production
+      hosts:
+        - host: sure.trashstack.dev
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - hosts:
+            - sure.trashstack.dev
+          secretName: sure-trashstack-dev-tls

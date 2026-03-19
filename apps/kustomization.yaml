@@ -6,4 +6,5 @@ resources:
   - flux-ui
   - longhorn-ui
   - nextcloud
+  - sure
   - traefik-dashboard
