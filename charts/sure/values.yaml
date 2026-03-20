@@ -181,7 +181,7 @@ redisOperator:
   image:
     # Use OT-CONTAINER-KIT tuned image by default for best compatibility with the operator.
     repository: quay.io/opstree/redis
-    tag: v8.4.0
+    tag: v8.4.2
   # Probes for RedisSentinel (sentinel TCP port)
   probes:
     sentinel:
