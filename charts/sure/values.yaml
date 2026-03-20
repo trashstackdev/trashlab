@@ -175,7 +175,7 @@ redisOperator:
     # that understands SERVER_MODE/SETUP_MODE=SENTINEL and runs redis-sentinel on port 26379.
     image:
       repository: quay.io/opstree/redis-sentinel
-      tag: v8.4.0
+      tag: v8.4.2
   replicas: 3
   # Image used by the RedisReplication CR (required by operator CRD)
   image:
