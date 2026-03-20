@@ -83,32 +83,10 @@ spec:
       database: {{ .Values.cnpg.cluster.appDatabase | default "sure" }}
       owner: {{ .Values.cnpg.cluster.appUser | default "sure" }}
       secret:
-        name: {{ .Values.cnpg.cluster.existingSecret | default (default (printf "%s-db-app" (include "sure.fullname" .)) .Values.cnpg.cluster.secret.name) }}
+        name: {{ required "cnpg.cluster.existingSecret must be set; provide a Secret with the DB username and password keys" .Values.cnpg.cluster.existingSecret }}
       postInitSQL:
-        - {{ printf "GRANT CONNECT ON DATABASE postgres TO \"%s\";" (.Values.cnpg.cluster.appUser | default "sure") | quote }}
-        - {{ printf "ALTER ROLE \"%s\" CREATEDB;" (.Values.cnpg.cluster.appUser | default "sure") | quote }}
-  {{- if not .Values.cnpg.cluster.existingSecret }}
+        - {{ printf "GRANT CONNECT ON DATABASE \"%s\" TO \"%s\";" (.Values.cnpg.cluster.appDatabase | default "sure") (.Values.cnpg.cluster.appUser | default "sure") | quote }}
   enableSuperuserAccess: false
-  {{- end }}
   monitoring:
     enablePodMonitor: false
-{{- end }}
----
-{{- if and .Values.cnpg.cluster.enabled (and (not .Values.cnpg.cluster.existingSecret) .Values.cnpg.cluster.secret.enabled) }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ default (printf "%s-db-app" (include "sure.fullname" .)) .Values.cnpg.cluster.secret.name }}
-  labels:
-    {{- include "sure.labels" . | nindent 4 }}
-type: Opaque
-stringData:
-  {{ .Values.cnpg.cluster.secret.usernameKey | default "username" }}: {{ .Values.cnpg.cluster.appUser | default "sure" }}
-  {{- $secretName := default (printf "%s-db-app" (include "sure.fullname" .)) .Values.cnpg.cluster.secret.name }}
-  {{- $existingSecret := lookup "v1" "Secret" .Release.Namespace $secretName }}
-  {{- $pw := randAlphaNum 24 }}
-  {{- if $existingSecret }}
-    {{- $pw = index $existingSecret.data (.Values.cnpg.cluster.secret.passwordKey | default "password") | b64dec }}
-  {{- end }}
-  {{ .Values.cnpg.cluster.secret.passwordKey | default "password" }}: {{ $pw | quote }}
 {{- end }}

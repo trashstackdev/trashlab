@@ -55,7 +55,11 @@ spec:
               bundle exec sidekiq -C config/sidekiq.yml
           {{- end }}
           env:
-            {{- include "sure.env" (dict "ctx" . "includeDatabase" true "includeRedis" true "extraEnv" .Values.worker.extraEnv) | nindent 12 }}
+            {{- include "sure.env" (dict "ctx" . "includeDatabase" true "includeRedis" true) | nindent 12 }}
+            {{- range $k, $v := .Values.worker.extraEnv }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
           {{- if or .Values.rails.extraEnvFrom .Values.worker.extraEnvFrom }}
           envFrom:
             {{- with .Values.rails.extraEnvFrom }}
@@ -65,6 +69,20 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- end }}
+          livenessProbe:
+            exec:
+              command: ["pgrep", "-f", "sidekiq"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["pgrep", "-f", "sidekiq"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           resources:

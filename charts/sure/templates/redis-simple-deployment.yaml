@@ -69,8 +69,8 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "sure.fullname" . }}-redis
       {{- end }}
----
 {{- if .Values.redisSimple.persistence.enabled }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
