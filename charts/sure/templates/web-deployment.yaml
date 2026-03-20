@@ -11,11 +11,11 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       {{- if and .Values.web.strategy .Values.web.strategy.rollingUpdate }}
-      maxUnavailable: {{ .Values.web.strategy.rollingUpdate.maxUnavailable | default 1 }}
-      maxSurge: {{ .Values.web.strategy.rollingUpdate.maxSurge | default 0 }}
+      maxUnavailable: {{ .Values.web.strategy.rollingUpdate.maxUnavailable | default 0 }}
+      maxSurge: {{ .Values.web.strategy.rollingUpdate.maxSurge | default 1 }}
       {{- else }}
-      maxUnavailable: 1
-      maxSurge: 0
+      maxUnavailable: 0
+      maxSurge: 1
       {{- end }}
   selector:
     matchLabels:

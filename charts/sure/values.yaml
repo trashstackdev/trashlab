@@ -82,6 +82,8 @@ cnpg:
     storage:
       size: 10Gi
       storageClassName: ""
+    monitoring:
+      enablePodMonitor: false
     # Optional CNPG backup configuration (rendered as `.spec.backup` on the Cluster CR)
     # Example (CNPG volume snapshots):
     # backup:

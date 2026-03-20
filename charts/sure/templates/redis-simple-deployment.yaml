@@ -8,6 +8,10 @@ metadata:
     {{- include "sure.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  {{- if .Values.redisSimple.persistence.enabled }}
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/component: redis
@@ -27,18 +31,19 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
+              {{- $port := .Values.redisSimple.service.port | default 6379 }}
               {{- if .Values.redisSimple.auth.enabled }}
               echo "requirepass $REDIS_PASSWORD" > /tmp/redis-auth.conf
               {{- if .Values.redisSimple.persistence.enabled }}
-              exec redis-server /tmp/redis-auth.conf --appendonly yes --dir /data
+              exec redis-server /tmp/redis-auth.conf --port {{ $port }} --appendonly yes --dir /data
               {{- else }}
-              exec redis-server /tmp/redis-auth.conf --appendonly no --save ''
+              exec redis-server /tmp/redis-auth.conf --port {{ $port }} --appendonly no --save ''
               {{- end }}
               {{- else }}
               {{- if .Values.redisSimple.persistence.enabled }}
-              exec redis-server --appendonly yes --dir /data
+              exec redis-server --port {{ $port }} --appendonly yes --dir /data
               {{- else }}
-              exec redis-server --appendonly no --save ''
+              exec redis-server --port {{ $port }} --appendonly no --save ''
               {{- end }}
               {{- end }}
           {{- if .Values.redisSimple.auth.enabled }}

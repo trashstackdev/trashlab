@@ -15,9 +15,9 @@ spec:
   {{- end }}
   storage:
     size: {{ .Values.cnpg.cluster.storage.size | default "10Gi" }}
-    {{ if .Values.cnpg.cluster.storage.storageClassName }}
+    {{- if .Values.cnpg.cluster.storage.storageClassName }}
     storageClass: {{ .Values.cnpg.cluster.storage.storageClassName }}
-    {{ end }}
+    {{- end }}
   {{ with .Values.cnpg.cluster.backup }}
   {{- $backup := deepCopy . }}
   {{- /* CNPG `spec.backup` does not support these historical/example keys */ -}}
@@ -88,5 +88,5 @@ spec:
         - {{ printf "GRANT CONNECT ON DATABASE \"%s\" TO \"%s\";" (.Values.cnpg.cluster.appDatabase | default "sure") (.Values.cnpg.cluster.appUser | default "sure") | quote }}
   enableSuperuserAccess: false
   monitoring:
-    enablePodMonitor: false
+    enablePodMonitor: {{ .Values.cnpg.cluster.monitoring.enablePodMonitor | default false }}
 {{- end }}
