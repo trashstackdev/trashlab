@@ -28,6 +28,17 @@ spec:
         OIDC_REDIRECT_URI: "https://sure.trashstack.dev/auth/openid_connect/callback"
         RAILS_ASSUME_SSL: "true"
         FORCE_SSL: "true"
+      extraEnvVars:
+        - name: OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: sure-secret
+              key: OIDC_CLIENT_ID
+        - name: OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: sure-secret
+              key: OIDC_CLIENT_SECRET
 
     cnpg:
       enabled: false
