@@ -97,16 +97,14 @@ The helper always injects:
 {{- if $ctx.Values.rails.externalAssistant.enabled }}
 - name: EXTERNAL_ASSISTANT_URL
   value: {{ $ctx.Values.rails.externalAssistant.url | quote }}
-{{- if $ctx.Values.rails.externalAssistant.tokenSecretRef }}
+{{- if not $ctx.Values.rails.externalAssistant.tokenSecretRef }}
+{{- fail "rails.externalAssistant.tokenSecretRef is required when externalAssistant is enabled. Set tokenSecretRef.name and tokenSecretRef.key to reference an existing Secret." }}
+{{- end }}
 - name: EXTERNAL_ASSISTANT_TOKEN
   valueFrom:
     secretKeyRef:
       name: {{ $ctx.Values.rails.externalAssistant.tokenSecretRef.name }}
       key: {{ $ctx.Values.rails.externalAssistant.tokenSecretRef.key }}
-{{- else }}
-- name: EXTERNAL_ASSISTANT_TOKEN
-  value: {{ $ctx.Values.rails.externalAssistant.token | quote }}
-{{- end }}
 - name: EXTERNAL_ASSISTANT_AGENT_ID
   value: {{ $ctx.Values.rails.externalAssistant.agentId | quote }}
 - name: EXTERNAL_ASSISTANT_SESSION_KEY

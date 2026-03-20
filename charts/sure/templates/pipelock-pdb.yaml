@@ -11,8 +11,8 @@ metadata:
 spec:
   {{- if .Values.pipelock.pdb.minAvailable }}
   minAvailable: {{ .Values.pipelock.pdb.minAvailable }}
-  {{- else if .Values.pipelock.pdb.maxUnavailable }}
-  maxUnavailable: {{ .Values.pipelock.pdb.maxUnavailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.pipelock.pdb.maxUnavailable | default 1 }}
   {{- end }}
   selector:
     matchLabels:
