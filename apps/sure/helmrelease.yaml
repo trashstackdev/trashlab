@@ -35,9 +35,6 @@ spec:
         enabled: true
         instances: 1
         existingSecret: sure-secret
-        secret:
-          usernameKey: db-username
-          passwordKey: db-password
         storage:
           size: 10Gi
           storageClassName: longhorn
