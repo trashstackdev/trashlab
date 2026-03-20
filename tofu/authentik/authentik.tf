@@ -37,11 +37,17 @@ resource "authentik_application" "traefik_dashboard" {
   protocol_provider = authentik_provider_proxy.traefik_dashboard.id
 }
 
+resource "authentik_application" "sure" {
+  name              = "Sure Finance"
+  slug              = "sure"
+  protocol_provider = authentik_provider_oauth2.sure.id
+}
+
 resource "authentik_application" "nextcloud" {
   name              = "Nextcloud"
   slug              = "nextcloud"
   protocol_provider = authentik_provider_oauth2.nextcloud.id
-  meta_icon = "https://nextcloud.com/c/uploads/2022/11/logo_nextcloud_white.svg"
+  meta_icon         = "https://nextcloud.com/c/uploads/2025/10/Nextcloud_02-blue-logo.svg"
 }
 
 resource "authentik_outpost" "embedded" {

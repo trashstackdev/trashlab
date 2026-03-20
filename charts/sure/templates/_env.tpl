@@ -1,0 +1,128 @@
+{{/*
+Shared environment variable helpers for Rails workloads.
+
+Usage examples (indent with nindent in caller):
+
+  {{ include "sure.env" (dict "ctx" . "includeDatabase" true "includeRedis" true "extraEnv" .Values.worker.extraEnv "extraEnvFrom" .Values.worker.extraEnvFrom) | nindent 10 }}
+
+The helper always injects:
+- RAILS_ENV
+- SECRET_KEY_BASE
+- optional Active Record Encryption keys (controlled by rails.encryptionEnv.enabled)
+- optional DATABASE_URL + DB_PASSWORD (includeDatabase=true and helper can compute a DB URL)
+- optional REDIS_URL + REDIS_PASSWORD (includeRedis=true and helper can compute a Redis URL)
+- optional HTTPS_PROXY / HTTP_PROXY / NO_PROXY (pipelock.enabled=true)
+- rails.settings / rails.extraEnv / rails.extraEnvVars
+- optional additional per-workload env / envFrom blocks via extraEnv / extraEnvFrom.
+*/}}
+
+{{- define "sure.env" -}}
+{{- $ctx := .ctx -}}
+{{- $includeDatabase := default true .includeDatabase -}}
+{{- $includeRedis := default true .includeRedis -}}
+{{- $extraEnv := .extraEnv | default (dict) -}}
+{{- $extraEnvFrom := .extraEnvFrom -}}
+
+- name: RAILS_ENV
+  value: {{ $ctx.Values.rails.env | quote }}
+- name: SECRET_KEY_BASE
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "sure.appSecretName" $ctx }}
+      key: SECRET_KEY_BASE
+{{- if $ctx.Values.rails.encryptionEnv.enabled }}
+- name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "sure.appSecretName" $ctx }}
+      key: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+- name: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "sure.appSecretName" $ctx }}
+      key: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+- name: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "sure.appSecretName" $ctx }}
+      key: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+{{- end }}
+{{- if $includeDatabase }}
+{{- $dburl := include "sure.databaseUrl" $ctx -}}
+{{- if $dburl }}
+- name: DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "sure.dbSecretName" $ctx }}
+      key: {{ include "sure.dbPasswordKey" $ctx }}
+- name: DATABASE_URL
+  value: {{ $dburl | quote }}
+{{- end }}
+{{- end }}
+{{- if $includeRedis }}
+{{- $redis := include "sure.redisUrl" $ctx -}}
+{{- if $redis }}
+- name: REDIS_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "sure.redisSecretName" $ctx }}
+      key: {{ include "sure.redisPasswordKey" $ctx }}
+- name: REDIS_URL
+  value: {{ $redis | quote }}
+{{- $sentinelHosts := include "sure.redisSentinelHosts" $ctx -}}
+{{- if $sentinelHosts }}
+- name: REDIS_SENTINEL_HOSTS
+  value: {{ $sentinelHosts | quote }}
+- name: REDIS_SENTINEL_MASTER
+  value: {{ include "sure.redisSentinelMaster" $ctx | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if and $ctx.Values.pipelock.enabled (ne (toString (dig "forwardProxy" "enabled" true $ctx.Values.pipelock)) "false") }}
+{{- $proxyPort := 8888 -}}
+{{- if $ctx.Values.pipelock.forwardProxy -}}
+{{- $proxyPort = int ($ctx.Values.pipelock.forwardProxy.port | default 8888) -}}
+{{- end }}
+- name: HTTPS_PROXY
+  value: {{ printf "http://%s-pipelock.%s.svc.cluster.local:%d" (include "sure.fullname" $ctx) $ctx.Release.Namespace $proxyPort | quote }}
+- name: HTTP_PROXY
+  value: {{ printf "http://%s-pipelock.%s.svc.cluster.local:%d" (include "sure.fullname" $ctx) $ctx.Release.Namespace $proxyPort | quote }}
+- name: NO_PROXY
+  value: "localhost,127.0.0.1,.svc.cluster.local,.cluster.local"
+{{- end }}
+{{- range $k, $v := $ctx.Values.rails.settings }}
+- name: {{ $k }}
+  value: {{ $v | quote }}
+{{- end }}
+{{- if $ctx.Values.rails.externalAssistant.enabled }}
+- name: EXTERNAL_ASSISTANT_URL
+  value: {{ $ctx.Values.rails.externalAssistant.url | quote }}
+{{- if not $ctx.Values.rails.externalAssistant.tokenSecretRef }}
+{{- fail "rails.externalAssistant.tokenSecretRef is required when externalAssistant is enabled. Set tokenSecretRef.name and tokenSecretRef.key to reference an existing Secret." }}
+{{- end }}
+- name: EXTERNAL_ASSISTANT_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ $ctx.Values.rails.externalAssistant.tokenSecretRef.name }}
+      key: {{ $ctx.Values.rails.externalAssistant.tokenSecretRef.key }}
+- name: EXTERNAL_ASSISTANT_AGENT_ID
+  value: {{ $ctx.Values.rails.externalAssistant.agentId | quote }}
+- name: EXTERNAL_ASSISTANT_SESSION_KEY
+  value: {{ $ctx.Values.rails.externalAssistant.sessionKey | quote }}
+{{- if $ctx.Values.rails.externalAssistant.allowedEmails }}
+- name: EXTERNAL_ASSISTANT_ALLOWED_EMAILS
+  value: {{ $ctx.Values.rails.externalAssistant.allowedEmails | quote }}
+{{- end }}
+{{- end }}
+{{- range $k, $v := $ctx.Values.rails.extraEnv }}
+- name: {{ $k }}
+  value: {{ $v | quote }}
+{{- end }}
+{{- with $ctx.Values.rails.extraEnvVars }}
+{{- toYaml . | nindent 0 }}
+{{- end }}
+{{- range $k, $v := $extraEnv }}
+- name: {{ $k }}
+  value: {{ $v | quote }}
+{{- end }}
+{{- end }}
