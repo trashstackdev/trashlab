@@ -31,6 +31,17 @@ resource "authentik_provider_proxy" "traefik_dashboard" {
   access_token_validity = "hours=24"
 }
 
+# ForwardAuth proxy provider for Sure Finance
+resource "authentik_provider_proxy" "sure" {
+  name                  = "sure"
+  external_host         = "https://sure.trashstack.dev"
+  mode                  = "forward_single"
+  authorization_flow    = data.authentik_flow.implicit_consent.id
+  invalidation_flow     = data.authentik_flow.invalidation.id
+  property_mappings     = data.authentik_property_mapping_provider_scope.proxy_scopes.ids
+  access_token_validity = "hours=24"
+}
+
 # OAuth2/OIDC provider for Sure Finance
 resource "authentik_provider_oauth2" "sure" {
   name          = "Sure Finance"

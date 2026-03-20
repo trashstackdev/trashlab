@@ -43,6 +43,12 @@ resource "authentik_application" "sure" {
   protocol_provider = authentik_provider_oauth2.sure.id
 }
 
+resource "authentik_application" "sure_proxy" {
+  name              = "Sure Finance (Proxy)"
+  slug              = "sure-proxy"
+  protocol_provider = authentik_provider_proxy.sure.id
+}
+
 resource "authentik_application" "nextcloud" {
   name              = "Nextcloud"
   slug              = "nextcloud"
@@ -58,6 +64,7 @@ resource "authentik_outpost" "embedded" {
     authentik_provider_proxy.flux_ui.id,
     authentik_provider_proxy.longhorn_ui.id,
     authentik_provider_proxy.traefik_dashboard.id,
+    authentik_provider_proxy.sure.id,
   ]
   config = jsonencode({
     authentik_host       = var.authentik_url
