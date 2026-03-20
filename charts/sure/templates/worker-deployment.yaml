@@ -52,7 +52,7 @@ spec:
           # Default: use Sidekiq's config/sidekiq.yml so all priority queues are polled
           args:
             - |
-              bundle exec sidekiq -C config/sidekiq.yml
+              exec bundle exec sidekiq -C config/sidekiq.yml
           {{- end }}
           env:
             {{- include "sure.env" (dict "ctx" . "includeDatabase" true "includeRedis" true) | nindent 12 }}
