@@ -85,8 +85,6 @@ spec:
       owner: {{ .Values.cnpg.cluster.appUser | default "sure" }}
       secret:
         name: {{ required "cnpg.cluster.existingSecret must be set; provide a Secret with the DB username and password keys" .Values.cnpg.cluster.existingSecret }}
-      postInitSQL:
-        - {{ printf "GRANT CONNECT ON DATABASE \"%s\" TO \"%s\";" (.Values.cnpg.cluster.appDatabase | default "sure") (.Values.cnpg.cluster.appUser | default "sure") | quote }}
   enableSuperuserAccess: false
   monitoring:
     enablePodMonitor: {{ .Values.cnpg.cluster.monitoring.enablePodMonitor | default false }}
