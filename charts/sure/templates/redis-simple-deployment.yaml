@@ -27,10 +27,19 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
+              {{- if .Values.redisSimple.auth.enabled }}
+              echo "requirepass $REDIS_PASSWORD" > /tmp/redis-auth.conf
               {{- if .Values.redisSimple.persistence.enabled }}
-              exec redis-server --appendonly yes --dir /data{{ if .Values.redisSimple.auth.enabled }} --requirepass "$REDIS_PASSWORD"{{ end }}
+              exec redis-server /tmp/redis-auth.conf --appendonly yes --dir /data
               {{- else }}
-              exec redis-server --appendonly no --save ''{{ if .Values.redisSimple.auth.enabled }} --requirepass "$REDIS_PASSWORD"{{ end }}
+              exec redis-server /tmp/redis-auth.conf --appendonly no --save ''
+              {{- end }}
+              {{- else }}
+              {{- if .Values.redisSimple.persistence.enabled }}
+              exec redis-server --appendonly yes --dir /data
+              {{- else }}
+              exec redis-server --appendonly no --save ''
+              {{- end }}
               {{- end }}
           {{- if .Values.redisSimple.auth.enabled }}
           env:

@@ -103,11 +103,19 @@ spec:
         - name: tmp
           emptyDir: {}
         {{- end }}
+      {{- with .Values.worker.nodeSelector }}
       nodeSelector:
-        {{- toYaml .Values.worker.nodeSelector | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.affinity }}
       affinity:
-        {{- toYaml .Values.worker.affinity | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.tolerations }}
       tolerations:
-        {{- toYaml .Values.worker.tolerations | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.topologySpreadConstraints }}
       topologySpreadConstraints:
-        {{- toYaml .Values.worker.topologySpreadConstraints | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
