@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "sure.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": test-success
+    "helm.sh/hook": test
     # Auto-clean both successful and failed test Pods; logs remain in `kubectl logs` history
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
 spec:
@@ -20,9 +20,9 @@ spec:
       args:
         - |
           echo "Pinging Redis at $REDIS_URL";
-          redis-cli -u "$REDIS_URL" -a "$REDIS_PASSWORD" PING | grep -q PONG && echo OK || (echo FAILED && exit 1)
+          redis-cli -u "$REDIS_URL" PING | grep -q PONG && echo OK || (echo FAILED && exit 1)
       env:
-        - name: REDIS_PASSWORD
+        - name: REDISCLI_AUTH
           valueFrom:
             secretKeyRef:
               name: {{ include "sure.redisSecretName" . }}

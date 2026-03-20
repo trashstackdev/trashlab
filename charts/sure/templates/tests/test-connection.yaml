@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "sure.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": test-success
+    "helm.sh/hook": test
     # Auto-clean both successful and failed test Pods to keep the namespace tidy
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
 spec:

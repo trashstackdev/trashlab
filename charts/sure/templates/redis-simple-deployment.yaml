@@ -44,6 +44,16 @@ spec:
             - name: redis
               containerPort: {{ .Values.redisSimple.service.port | default 6379 }}
               protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: redis
+            initialDelaySeconds: 5
+            periodSeconds: 5
           {{- with .Values.redisSimple.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

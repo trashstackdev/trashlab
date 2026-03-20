@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Production-ready HA timeouts: 200ms connect, 1s read/write, 3 reconnection attempts
   - Backward compatible with existing `REDIS_URL` deployments
 
-### [0.6.6] - 2025-12-31
+## [0.6.6] - 2025-12-31
 
 ### Added
 
@@ -61,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Example-only keys like `backup.ttl` and `backup.volumeSnapshot.enabled` are stripped to avoid CRD warnings.
 - CNPG: render `Cluster.spec.plugins` from `cnpg.cluster.plugins` (enables barman-cloud plugin / WAL archiver configuration).
 
-### [0.0.0], [0.6.5]
+## [0.0.0], [0.6.5]
 
 ### Added
 

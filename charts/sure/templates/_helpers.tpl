@@ -111,7 +111,7 @@ true
 
 {{/* Common secret name helpers to avoid complex inline conditionals in env blocks */}}
 {{- define "sure.appSecretName" -}}
-{{- default (printf "%s-app" (include "sure.fullname" .)) .Values.rails.existingSecret | default (printf "%s-app" (include "sure.fullname" .)) -}}
+{{- .Values.rails.existingSecret | default (printf "%s-app" (include "sure.fullname" .)) -}}
 {{- end -}}
 
 {{- define "sure.dbSecretName" -}}
@@ -119,7 +119,7 @@ true
   {{- if .Values.cnpg.cluster.existingSecret -}}
     {{- .Values.cnpg.cluster.existingSecret -}}
   {{- else -}}
-    {{- default (printf "%s-db-app" (include "sure.fullname" .)) .Values.cnpg.cluster.secret.name | default (printf "%s-db-app" (include "sure.fullname" .)) -}}
+    {{- .Values.cnpg.cluster.secret.name | default (printf "%s-db-app" (include "sure.fullname" .)) -}}
   {{- end -}}
 {{- else -}}
   {{- include "sure.appSecretName" . -}}
@@ -161,7 +161,7 @@ true
 {{/* Pipelock image string */}}
 {{- define "sure.pipelockImage" -}}
 {{- $repo := "ghcr.io/luckypipewrench/pipelock" -}}
-{{- $tag := "latest" -}}
+{{- $tag := "0.3.2" -}}
 {{- if .Values.pipelock.image -}}
 {{- $repo = .Values.pipelock.image.repository | default $repo -}}
 {{- $tag = .Values.pipelock.image.tag | default $tag -}}

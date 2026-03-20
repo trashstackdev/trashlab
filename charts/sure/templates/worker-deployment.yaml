@@ -70,13 +70,17 @@ spec:
           resources:
             {{- toYaml .Values.worker.resources | nindent 12 }}
           volumeMounts:
-            {{- toYaml .Values.worker.extraVolumeMounts | nindent 12 }}
+            {{- with .Values.worker.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if .Values.writableTmp.enabled }}
             - name: tmp
               mountPath: /tmp
             {{- end }}
       volumes:
-        {{- toYaml .Values.worker.extraVolumes | nindent 8 }}
+        {{- with .Values.worker.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- if .Values.writableTmp.enabled }}
         - name: tmp
           emptyDir: {}

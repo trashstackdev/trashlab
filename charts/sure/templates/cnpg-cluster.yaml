@@ -87,7 +87,6 @@ spec:
       postInitSQL:
         - {{ printf "GRANT CONNECT ON DATABASE postgres TO \"%s\";" (.Values.cnpg.cluster.appUser | default "sure") | quote }}
         - {{ printf "ALTER ROLE \"%s\" CREATEDB;" (.Values.cnpg.cluster.appUser | default "sure") | quote }}
-  {{- $secretName := .Values.cnpg.cluster.existingSecret | default (default (printf "%s-db-app" (include "sure.fullname" .)) .Values.cnpg.cluster.secret.name) }}
   {{- if not .Values.cnpg.cluster.existingSecret }}
   enableSuperuserAccess: false
   {{- end }}
@@ -105,5 +104,11 @@ metadata:
 type: Opaque
 stringData:
   {{ .Values.cnpg.cluster.secret.usernameKey | default "username" }}: {{ .Values.cnpg.cluster.appUser | default "sure" }}
-  {{ .Values.cnpg.cluster.secret.passwordKey | default "password" }}: {{ randAlphaNum 24 | quote }}
+  {{- $secretName := default (printf "%s-db-app" (include "sure.fullname" .)) .Values.cnpg.cluster.secret.name }}
+  {{- $existingSecret := lookup "v1" "Secret" .Release.Namespace $secretName }}
+  {{- $pw := randAlphaNum 24 }}
+  {{- if $existingSecret }}
+    {{- $pw = index $existingSecret.data (.Values.cnpg.cluster.secret.passwordKey | default "password") | b64dec }}
+  {{- end }}
+  {{ .Values.cnpg.cluster.secret.passwordKey | default "password" }}: {{ $pw | quote }}
 {{- end }}

@@ -40,7 +40,7 @@ spec:
             - |
               {{ .Values.migrations.initContainer.args | nindent 14 }}
           env:
-            {{- include "sure.env" (dict "ctx" . "includeDatabase" true "includeRedis" true) | nindent 12 }}
+            {{- include "sure.env" (dict "ctx" . "includeDatabase" true "includeRedis" false) | nindent 12 }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           resources:
@@ -94,13 +94,17 @@ spec:
           resources:
             {{- toYaml .Values.web.resources | nindent 12 }}
           volumeMounts:
-            {{- toYaml .Values.web.extraVolumeMounts | nindent 12 }}
+            {{- with .Values.web.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if .Values.writableTmp.enabled }}
             - name: tmp
               mountPath: /tmp
             {{- end }}
       volumes:
-        {{- toYaml .Values.web.extraVolumes | nindent 8 }}
+        {{- with .Values.web.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- if .Values.writableTmp.enabled }}
         - name: tmp
           emptyDir: {}
