@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - service.yaml
   - ingress.yaml
+  - authentik-callback.yaml
