@@ -11,6 +11,12 @@
       "groupName": "flux"
     },
     {
+      "description": "Group all non-major updates into one PR",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "all non-major updates",
+      "groupSlug": "non-major"
+    },
+    {
       "description": "Require manual approval for major chart version bumps",
       "matchManagers": ["flux"],
       "matchUpdateTypes": ["major"],
