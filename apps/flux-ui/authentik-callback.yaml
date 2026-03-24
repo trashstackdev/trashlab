@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: flux-ui-authentik-callback
+  namespace: flux-system
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`flux.trashstack.dev`) && PathPrefix(`/outpost.goauthentik.io/`)
+      kind: Rule
+      services:
+        - name: authentik-server
+          namespace: authentik
+          port: 80

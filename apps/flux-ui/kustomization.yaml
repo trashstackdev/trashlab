@@ -4,3 +4,4 @@ resources:
   - networkpolicy.yaml
   - middleware.yaml
   - ingress.yaml
+  - authentik-callback.yaml
