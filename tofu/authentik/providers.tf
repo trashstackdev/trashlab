@@ -67,7 +67,7 @@ resource "authentik_provider_oauth2" "grafana" {
   signing_key        = data.authentik_certificate_key_pair.self_signed.id
   sub_mode           = "hashed_user_id"
   issuer_mode        = "per_provider"
-  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes_with_offline.ids
 
   access_code_validity   = "minutes=1"
   access_token_validity  = "minutes=5"

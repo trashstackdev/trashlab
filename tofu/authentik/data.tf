@@ -31,6 +31,17 @@ data "authentik_property_mapping_provider_scope" "oidc_scopes" {
   ]
 }
 
+# Scope mappings for Grafana — includes offline_access for refresh token support
+# (required since authentik 2024.2 for refresh token grant)
+data "authentik_property_mapping_provider_scope" "oidc_scopes_with_offline" {
+  managed_list = [
+    "goauthentik.io/providers/oauth2/scope-openid",
+    "goauthentik.io/providers/oauth2/scope-email",
+    "goauthentik.io/providers/oauth2/scope-profile",
+    "goauthentik.io/providers/oauth2/scope-offline_access",
+  ]
+}
+
 # Brand flows
 data "authentik_flow" "authentication" {
   slug = "default-authentication-flow"
