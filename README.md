@@ -4,13 +4,13 @@ My GitOps configuration for a single-node k3s cluster on a Hetzner EX44, managed
 
 ## Services
 
-| Service | URL | Auth |
-|---|---|---|
-| Authentik | https://auth.trashstack.dev | — |
-| Flux UI | https://flux.trashstack.dev | ForwardAuth (Authentik) |
-| Traefik Dashboard | https://traefik.trashstack.dev | Basic auth |
-| Nextcloud | https://cloud.trashstack.dev | Nextcloud built-in |
-| Bluemap | https://bluemap.trashstack.dev | None |
+| Service | URL |
+|---|---|
+| Authentik | https://auth.trashstack.dev |
+| Flux UI | https://flux.trashstack.dev |
+| Traefik Dashboard | https://traefik.trashstack.dev |
+| Nextcloud | https://cloud.trashstack.dev |
+| Bluemap | https://bluemap.trashstack.dev |
 
 ## Stack
 
