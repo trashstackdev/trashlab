@@ -37,6 +37,13 @@ resource "authentik_application" "traefik_dashboard" {
   protocol_provider = authentik_provider_proxy.traefik_dashboard.id
 }
 
+resource "authentik_application" "grafana" {
+  name              = "Grafana"
+  slug              = "grafana"
+  protocol_provider = authentik_provider_oauth2.grafana.id
+  meta_icon         = "https://raw.githubusercontent.com/grafana/grafana/main/public/img/grafana_icon.svg"
+}
+
 resource "authentik_application" "sure" {
   name              = "Sure Finance"
   slug              = "sure"

@@ -56,6 +56,31 @@ resource "authentik_provider_oauth2" "sure" {
   ]
 }
 
+# OAuth2/OIDC provider for Grafana
+resource "authentik_provider_oauth2" "grafana" {
+  name               = "Grafana"
+  client_id          = var.grafana_oidc_client_id
+  client_secret      = var.grafana_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.implicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+
+  access_code_validity   = "minutes=1"
+  access_token_validity  = "minutes=5"
+  refresh_token_validity = "days=30"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode = "strict"
+      url           = "https://grafana.trashstack.dev/login/generic_oauth"
+    }
+  ]
+}
+
 # OAuth2/OIDC provider for Nextcloud
 resource "authentik_provider_oauth2" "nextcloud" {
   name               = "Nextcloud"
