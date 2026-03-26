@@ -21,6 +21,14 @@ spec:
   values:
     api:
       insecure: true
+    metrics:
+      prometheus:
+        entryPoint: metrics
+    ports:
+      metrics:
+        port: 9100
+        expose:
+          default: false
     providers:
       kubernetesCRD:
         allowCrossNamespace: true

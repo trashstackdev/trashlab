@@ -1,0 +1,192 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 1h
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 82.14.1
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+
+  values:
+    # -------------------------------------------------------------------------
+    # Default rules
+    # -------------------------------------------------------------------------
+    defaultRules:
+      rules:
+        # k3s uses embedded etcd — default etcd alert rules assume a standalone
+        # etcd cluster with different metrics and won't fire correctly
+        etcd: false
+
+    kubeControllerManager:
+      enabled: true
+      endpoints:
+        - 5.9.57.177
+      service:
+        enabled: true
+        port: 10257
+        targetPort: 10257
+      serviceMonitor:
+        https: true
+        insecureSkipVerify: true
+        serverName: localhost
+
+    kubeScheduler:
+      enabled: true
+      endpoints:
+        - 5.9.57.177
+      service:
+        enabled: true
+        port: 10259
+        targetPort: 10259
+      serviceMonitor:
+        https: true
+        insecureSkipVerify: true
+        serverName: localhost
+
+    kubeProxy:
+      enabled: true
+      endpoints:
+        - 5.9.57.177
+      service:
+        enabled: true
+        port: 10249
+        targetPort: 10249
+
+    kubeEtcd:
+      enabled: true
+      endpoints:
+        - 5.9.57.177
+      service:
+        enabled: true
+        port: 2381
+        targetPort: 2381
+      serviceMonitor:
+        scheme: http
+
+    # -------------------------------------------------------------------------
+    # Prometheus
+    # -------------------------------------------------------------------------
+    prometheus:
+      prometheusSpec:
+        retention: 30d
+        retentionSize: "20GB"
+        # Discover ServiceMonitors/PodMonitors/Rules across all namespaces,
+        # not just those created by this Helm release
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: longhorn
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 25Gi
+
+    # -------------------------------------------------------------------------
+    # Alertmanager
+    # -------------------------------------------------------------------------
+    alertmanager:
+      alertmanagerSpec:
+        replicas: 1
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: longhorn
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 2Gi
+
+    # -------------------------------------------------------------------------
+    # Grafana
+    # -------------------------------------------------------------------------
+    grafana:
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
+
+      # OIDC client secret injected as GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET env var
+      envFromSecret: grafana-oauth
+
+      grafana.ini:
+        auth.generic_oauth:
+          enabled: true
+          name: Authentik
+          client_id: arY3821CB3oLlgVS8ikgw7A2n7oNpZ7uhdeT0p6N
+          scopes: openid email profile
+          auth_url: https://auth.trashstack.dev/application/o/grafana/authorize/
+          token_url: https://auth.trashstack.dev/application/o/grafana/token/
+          api_url: https://auth.trashstack.dev/application/o/userinfo/
+          role_attribute_path: "contains(groups, 'authentik Admins') && 'Admin' || 'Viewer'"
+          allow_sign_up: true
+
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        size: 5Gi
+
+      ingress:
+        enabled: true
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        hosts:
+          - grafana.trashstack.dev
+        tls:
+          - secretName: grafana-tls
+            hosts:
+              - grafana.trashstack.dev
+
+      # Load dashboards from grafana.com via the sidecar
+      sidecar:
+        dashboards:
+          enabled: true
+          searchNamespace: ALL
+
+      dashboardProviders:
+        dashboardproviders.yaml:
+          apiVersion: 1
+          providers:
+            - name: default
+              orgId: 1
+              folder: ""
+              type: file
+              disableDeletion: false
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards/default
+
+      dashboards:
+        default:
+          traefik-kubernetes:
+            gnetId: 17347
+            revision: 9
+            datasource: Prometheus
+          longhorn:
+            gnetId: 17626
+            revision: 2
+            datasource: Prometheus
+          cert-manager:
+            gnetId: 20842
+            revision: 3
+            datasource: Prometheus
