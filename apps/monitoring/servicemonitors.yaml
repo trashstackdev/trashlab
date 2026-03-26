@@ -34,10 +34,11 @@ spec:
     - port: manager
       path: /metrics
 ---
-# Scrape Traefik metrics (requires metrics.prometheus to be enabled in Traefik
-# HelmRelease — see infrastructure/controllers/traefik/helmrelease.yaml)
+# Scrape Traefik metrics via PodMonitor — the metrics port is intentionally not
+# exposed on the LoadBalancer Service (expose.default: false), so we target the
+# pod's containerPort directly instead.
 apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+kind: PodMonitor
 metadata:
   name: traefik
   namespace: monitoring
@@ -48,6 +49,6 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: traefik
-  endpoints:
+  podMetricsEndpoints:
     - port: metrics
       path: /metrics
