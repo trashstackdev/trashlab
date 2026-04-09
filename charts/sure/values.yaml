@@ -175,13 +175,13 @@ redisOperator:
     # that understands SERVER_MODE/SETUP_MODE=SENTINEL and runs redis-sentinel on port 26379.
     image:
       repository: quay.io/opstree/redis-sentinel
-      tag: v8.4.2
+      tag: v8.6.2
   replicas: 3
   # Image used by the RedisReplication CR (required by operator CRD)
   image:
     # Use OT-CONTAINER-KIT tuned image by default for best compatibility with the operator.
     repository: quay.io/opstree/redis
-    tag: v8.4.2
+    tag: v8.6.2
   # Probes for RedisSentinel (sentinel TCP port)
   probes:
     sentinel:
@@ -490,7 +490,7 @@ pipelock:
   enabled: false
   image:
     repository: ghcr.io/luckypipewrench/pipelock
-    tag: "2.0.0"
+    tag: "2.1.2"
     pullPolicy: IfNotPresent
     imagePullSecrets: []
   replicas: 1
