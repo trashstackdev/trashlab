@@ -8,4 +8,5 @@ resources:
   - longhorn-ui
   - nextcloud
   - sure
+  - teleport
   - traefik-dashboard

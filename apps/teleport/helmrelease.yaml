@@ -1,0 +1,50 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: teleport
+  namespace: teleport
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: teleport-cluster
+      # Check latest: helm search repo teleport/teleport-cluster
+      version: 18.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: teleport
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    # IMMUTABLE — changing clusterName after first deploy destroys the cluster CA
+    clusterName: teleport.trashstack.dev
+    chartMode: standalone
+
+    # Multiplex all traffic (web UI, tsh SSH, tctl) through a single port 443
+    proxyListenerMode: multiplex
+
+    # Use cert-manager-issued certificate — Traefik does TCP passthrough, Teleport handles TLS
+    tls:
+      existingSecretName: teleport-tls
+
+    # ClusterIP — Traefik IngressRouteTCP handles external access via SNI passthrough
+    service:
+      type: ClusterIP
+
+    persistence:
+      enabled: true
+      storageClassName: longhorn
+      volumeSize: 10Gi
+
+    highAvailability:
+      replicaCount: 1
+
+    log:
+      level: INFO
+      format: json

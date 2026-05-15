@@ -50,3 +50,12 @@ variable "grafana_oidc_client_secret" {
   sensitive = true
 }
 
+variable "teleport_oidc_client_id" {
+  type = string
+}
+
+variable "teleport_oidc_client_secret" {
+  type      = string
+  sensitive = true
+}
+
