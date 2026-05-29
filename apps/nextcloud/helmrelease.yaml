@@ -22,7 +22,7 @@ spec:
       retries: 3
   values:
     image:
-      tag: 33.0.3-apache
+      tag: 33.0.4-apache
     nextcloud:
       host: cloud.trashstack.dev
       existingSecret:
