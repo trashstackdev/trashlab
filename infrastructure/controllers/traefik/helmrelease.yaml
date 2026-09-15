@@ -15,7 +15,7 @@ spec:
         kind: HelmRepository
         name: traefik
         namespace: flux-system
-      version: 39.0.9
+      version: 41.5.0
   interval: 1m0s
   releaseName: traefik
   values:
