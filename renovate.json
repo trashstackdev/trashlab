@@ -2,7 +2,9 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "flux": {
-    "fileMatch": ["\\.yaml$"]
+    "managerFilePatterns": [
+      "/\\.yaml$/"
+    ]
   },
   "packageRules": [
     {
@@ -34,7 +36,9 @@
     {
       "description": "Nextcloud image tag",
       "customType": "regex",
-      "fileMatch": ["apps/nextcloud/helmrelease\\.yaml"],
+      "managerFilePatterns": [
+        "/apps/nextcloud/helmrelease\\.yaml/"
+      ],
       "matchStrings": [
         "tag: (?<currentValue>[\\d.]+-apache)"
       ],
