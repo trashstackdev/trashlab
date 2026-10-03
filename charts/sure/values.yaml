@@ -490,7 +490,7 @@ pipelock:
   enabled: false
   image:
     repository: ghcr.io/luckypipewrench/pipelock
-    tag: "3.5.0"
+    tag: "3.6.0"
     pullPolicy: IfNotPresent
     imagePullSecrets: []
   replicas: 1
