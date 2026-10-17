@@ -132,6 +132,9 @@ spec:
 
       # OIDC client secret injected as GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET env var
       envFromSecret: grafana-oauth
+      # Restart Grafana when the OIDC client secret is rotated in Bitwarden SM
+      annotations:
+        secret.reloader.stakater.com/reload: grafana-oauth
 
       grafana.ini:
         server:
