@@ -78,6 +78,13 @@ spec:
       prometheusSpec:
         retention: 30d
         retentionSize: "20GB"
+        # ~2.7 GiB typical, 3 GiB peak (Oct 2026); no CPU limit on purpose
+        resources:
+          requests:
+            cpu: 100m
+            memory: 3Gi
+          limits:
+            memory: 5Gi
         # Discover ServiceMonitors/PodMonitors/Rules across all namespaces,
         # not just those created by this Helm release
         serviceMonitorSelectorNilUsesHelmValues: false
@@ -200,6 +207,14 @@ spec:
           use_pkce: true
           use_refresh_token: true
           signout_redirect_url: https://auth.trashstack.dev/application/o/grafana/end-session/
+
+      # ~400 MiB typical, 680 MiB peak (Oct 2026)
+      resources:
+        requests:
+          cpu: 50m
+          memory: 384Mi
+        limits:
+          memory: 1Gi
 
       persistence:
         enabled: true

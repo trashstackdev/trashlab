@@ -34,6 +34,13 @@ spec:
           respondingTimeouts:
             # Traefik v3 cuts requests off after 60s, which breaks large uploads (Immich videos over mobile data)
             readTimeout: 600s
+    # ~130 MiB typical (Oct 2026)
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
     providers:
       kubernetesCRD:
         allowCrossNamespace: true

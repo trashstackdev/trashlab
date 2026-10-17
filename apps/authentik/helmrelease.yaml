@@ -48,8 +48,31 @@ spec:
           enabled: true
           storageClass: longhorn
           size: 8Gi
+        # ~330 MiB typical (Oct 2026)
+        resources:
+          requests:
+            cpu: 50m
+            memory: 384Mi
+          limits:
+            memory: 1Gi
+
+    # ~480 MiB typical (Oct 2026)
+    worker:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
 
     server:
+      # ~750 MiB typical, 900 MiB peak (Oct 2026)
+      resources:
+        requests:
+          cpu: 100m
+          memory: 768Mi
+        limits:
+          memory: 1536Mi
       ingress:
         enabled: true
         annotations:

@@ -103,8 +103,17 @@ spec:
     # Run background jobs (log rotation, trash/version expiry) on a schedule instead of on page loads
     cronjob:
       enabled: true
+      sidecar:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 1Gi
 
     resources:
       requests:
         cpu: 100m
         memory: 512Mi
+      limits:
+        memory: 2Gi

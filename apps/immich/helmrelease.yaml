@@ -67,12 +67,13 @@ spec:
                     secretKeyRef:
                       name: immich-db
                       key: password
+              # ~3.4 GiB while importing (Oct 2026); thumbnailing and transcoding run in this container
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 512Mi
+                  cpu: 250m
+                  memory: 2Gi
                 limits:
-                  memory: 4Gi
+                  memory: 8Gi
       ingress:
         main:
           enabled: true
@@ -100,9 +101,10 @@ spec:
         main:
           containers:
             main:
+              # ~1.6 GiB typical, 2.2 GiB peak, up to 4 cores while indexing (Oct 2026)
               resources:
                 requests:
                   cpu: 100m
-                  memory: 1Gi
+                  memory: 2Gi
                 limits:
                   memory: 6Gi
