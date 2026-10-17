@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - cert-manager/
   - cloudnative-pg/
+  - csi-driver-smb/
   - kube-prometheus-stack/
   - external-secrets/
   - flux-operator/

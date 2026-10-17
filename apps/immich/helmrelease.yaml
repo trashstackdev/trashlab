@@ -1,0 +1,108 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: immich
+    namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Shared by the server and machine-learning components
+    controllers:
+      main:
+        containers:
+          main:
+            image:
+              # The chart does not follow Immich releases: bump this tag (Renovate does) and read the release notes first
+              tag: v3.3.3
+            env:
+              TZ: Europe/Berlin
+
+    immich:
+      persistence:
+        library:
+          # Storage Box over SMB, mounted at /data (see storage.yaml)
+          existingClaim: immich-library
+      # Config file rendered by ESO (externalsecrets.yaml), since it holds the OIDC client secret
+      existingConfiguration: immich-config
+      configurationKind: Secret
+
+    valkey:
+      enabled: true
+
+    server:
+      persistence:
+        # Thumbnails and transcoded videos on local NVMe instead of the Storage Box
+        thumbs:
+          enabled: true
+          existingClaim: immich-thumbs
+          globalMounts:
+            - path: /data/thumbs
+              subPath: thumbs
+            - path: /data/encoded-video
+              subPath: encoded-video
+      controllers:
+        main:
+          containers:
+            main:
+              env:
+                DB_HOSTNAME: immich-db-rw
+                DB_DATABASE_NAME: immich
+                DB_USERNAME:
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-db
+                      key: username
+                DB_PASSWORD:
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-db
+                      key: password
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+                limits:
+                  memory: 4Gi
+      ingress:
+        main:
+          enabled: true
+          annotations:
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            cert-manager.io/cluster-issuer: letsencrypt-production
+          hosts:
+            - host: photos.trashstack.dev
+              paths:
+                - path: /
+                  service:
+                    identifier: main
+          tls:
+            - hosts:
+                - photos.trashstack.dev
+              secretName: photos-trashstack-dev-tls
+
+    machine-learning:
+      persistence:
+        cache:
+          enabled: true
+          type: persistentVolumeClaim
+          existingClaim: immich-ml-cache
+      controllers:
+        main:
+          containers:
+            main:
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 1Gi
+                limits:
+                  memory: 6Gi

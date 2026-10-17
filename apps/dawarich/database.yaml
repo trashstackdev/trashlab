@@ -1,0 +1,30 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: dawarich-db
+  namespace: dawarich
+spec:
+  instances: 1
+  # Postgres with PostGIS. Upstream compose uses Postgres 17, so stay on 17 and bump by hand.
+  imageName: ghcr.io/cloudnative-pg/postgis:17-3.6-standard-trixie
+  storage:
+    size: 10Gi
+    storageClass: longhorn
+  bootstrap:
+    initdb:
+      database: dawarich
+      owner: dawarich
+      secret:
+        name: dawarich-db
+  managed:
+    roles:
+      # Dedicated cluster: Dawarich's migrations create the PostGIS extension themselves,
+      # which needs superuser (PostGIS is not a trusted extension)
+      - name: dawarich
+        ensure: present
+        login: true
+        superuser: true
+        passwordSecret:
+          name: dawarich-db
+  enableSuperuserAccess: false

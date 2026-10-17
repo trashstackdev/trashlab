@@ -30,6 +30,22 @@
       "matchManagers": ["flux"],
       "matchDatasources": ["helm"],
       "allowedVersions": "<={{major}}.{{add minor 1}}"
+    },
+    {
+      "description": "Immich (server image and chart) gets its own PR: releases often carry breaking changes",
+      "matchPackageNames": ["ghcr.io/immich-app/**"],
+      "groupName": "immich",
+      "prBodyNotes": [
+        "Read the Immich release notes for breaking changes and check the latest Longhorn backup of `immich-db` before merging."
+      ]
+    },
+    {
+      "description": "Dawarich gets its own PR: updates have broken instances before",
+      "matchPackageNames": ["freikin/dawarich"],
+      "groupName": "dawarich",
+      "prBodyNotes": [
+        "Read the Dawarich release notes for breaking changes and check the latest Longhorn backup of `dawarich-db` before merging."
+      ]
     }
   ],
   "customManagers": [
@@ -45,6 +61,30 @@
       "depNameTemplate": "nextcloud",
       "datasourceTemplate": "docker",
       "registryUrlTemplate": "https://index.docker.io"
+    },
+    {
+      "description": "Immich image tag (the chart does not follow Immich releases)",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/apps/immich/helmrelease\\.yaml/"
+      ],
+      "matchStrings": [
+        "tag: (?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "ghcr.io/immich-app/immich-server",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "Dawarich image tag",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/apps/dawarich/helmrelease\\.yaml/"
+      ],
+      "matchStrings": [
+        "repository: freikin/dawarich\\s+tag: (?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "freikin/dawarich",
+      "datasourceTemplate": "docker"
     }
   ]
 }

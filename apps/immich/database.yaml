@@ -1,0 +1,34 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-db
+  namespace: immich
+spec:
+  instances: 1
+  # Postgres with VectorChord bundled. The chart's "image volume" extension method needs Kubernetes 1.33+.
+  # Bump by hand together with Immich, and check Immich's supported VectorChord range first.
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:18.6-1.1.1
+  postgresql:
+    shared_preload_libraries:
+      - vchord.so
+  storage:
+    size: 10Gi
+    storageClass: longhorn
+  bootstrap:
+    initdb:
+      database: immich
+      owner: immich
+      secret:
+        name: immich-db
+  managed:
+    roles:
+      # Dedicated cluster: let Immich create and upgrade its own extensions (vchord, vector, cube, earthdistance)
+      # like the upstream docker-compose setup does
+      - name: immich
+        ensure: present
+        login: true
+        superuser: true
+        passwordSecret:
+          name: immich-db
+  enableSuperuserAccess: false
