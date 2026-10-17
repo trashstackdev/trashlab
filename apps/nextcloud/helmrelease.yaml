@@ -35,8 +35,9 @@ spec:
           value: cloud.trashstack.dev
         - name: overwrite.cli.url
           value: https://cloud.trashstack.dev
+        # Traefik runs in the pod network and forwards the client IP in X-Forwarded-For
         - name: TRUSTED_PROXIES
-          value: 5.9.57.177
+          value: 10.42.0.0/16
         - name: APACHE_DISABLE_REWRITE_IP
           value: "1"
       phpConfigs:
@@ -57,6 +58,13 @@ spec:
       image:
         tag: 16.3.0-debian-12-r10
       primary:
+        # Replaces the Bitnami "nano" preset (150m CPU limit throttled Postgres); no CPU limit on purpose
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
         persistence:
           enabled: true
           storageClass: longhorn
@@ -66,6 +74,14 @@ spec:
       auth:
         existingSecret: nextcloud-redis
         existingSecretPasswordKey: redis-password
+      master:
+        # Replaces the Bitnami "nano" preset; no CPU limit on purpose
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
       replica:
         replicaCount: 0
 
