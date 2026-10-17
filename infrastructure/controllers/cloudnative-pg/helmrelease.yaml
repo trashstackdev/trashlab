@@ -5,8 +5,6 @@ metadata:
   namespace: cnpg-system
 spec:
   interval: 1h
-  install:
-    createNamespace: true
   upgrade:
     crds: CreateReplace
   chart:

@@ -19,11 +19,14 @@ spec:
   interval: 1m0s
   releaseName: longhorn
   values:
-    defaultSettings:
+    # Since Longhorn 1.8 the backup target lives here, not under defaultSettings
+    defaultBackupStore:
       backupTarget: "cifs://u409469.your-storagebox.de/backup"
       backupTargetCredentialSecret: "cifs-secret"
+    defaultSettings:
       defaultReplicaCount: 1
-      # Without this, trim cannot free blocks still referenced by snapshots
-      removeSnapshotsDuringFilesystemTrim: true
+      # Keep false: when true, every trim-weekly run purges the latest snapshot chain,
+      # including manual snapshots and the base the next incremental backup builds on
+      removeSnapshotsDuringFilesystemTrim: false
     persistence:
       defaultClassReplicaCount: 1

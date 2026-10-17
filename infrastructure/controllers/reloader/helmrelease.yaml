@@ -25,4 +25,15 @@ spec:
         namespace: flux-system
   # Opt-in only: workloads restart when they carry a
   # secret.reloader.stakater.com/reload or configmap.reloader.stakater.com/reload annotation
-  values: {}
+  values:
+    reloader:
+      # Restart through a pod template annotation instead of an injected env var (less Helm drift)
+      reloadStrategy: annotations
+      # Catch up on Secret changes that happened while Reloader was down
+      reloadOnCreate: true
+      syncAfterRestart: true
+      # Watch only namespaces with opted-in workloads, not every Secret in the cluster
+      watchGlobally: false
+      namespaces:
+        - external-secrets
+        - monitoring

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: longhorn-system
+  annotations:
+    # Never prune: this namespace holds every Longhorn volume
+    kustomize.toolkit.fluxcd.io/prune: disabled

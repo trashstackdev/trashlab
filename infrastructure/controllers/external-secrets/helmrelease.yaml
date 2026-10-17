@@ -9,7 +9,6 @@ spec:
   releaseName: external-secrets
   timeout: 10m
   install:
-    createNamespace: true
     remediation:
       retries: 3
   upgrade:
