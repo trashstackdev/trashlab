@@ -32,3 +32,8 @@ spec:
     providers:
       kubernetesCRD:
         allowCrossNamespace: true
+    service:
+      spec:
+        # Keep client source IPs (single node, so there is no cross-node hop to lose).
+        # Apps behind Traefik must trust the pod network (10.42.0.0/16) for X-Forwarded-For.
+        externalTrafficPolicy: Local
