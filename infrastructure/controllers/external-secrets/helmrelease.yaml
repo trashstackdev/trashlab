@@ -25,6 +25,9 @@ spec:
         name: external-secrets
         namespace: flux-system
   values:
+    # Metrics for the ExternalSecretNotSynced alert
+    serviceMonitor:
+      enabled: true
     bitwarden-sdk-server:
       enabled: true
       # Restart when cert-manager renews the TLS cert: the server only reads it at startup

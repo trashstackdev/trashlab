@@ -67,16 +67,9 @@ spec:
         port: 10249
         targetPort: 10249
 
+    # This k3s node runs on SQLite, not etcd: there is nothing to scrape on 2381
     kubeEtcd:
-      enabled: true
-      endpoints:
-        - 5.9.57.177
-      service:
-        enabled: true
-        port: 2381
-        targetPort: 2381
-      serviceMonitor:
-        scheme: http
+      enabled: false
 
     # -------------------------------------------------------------------------
     # Prometheus
@@ -109,8 +102,63 @@ spec:
     # Alertmanager
     # -------------------------------------------------------------------------
     alertmanager:
+      # Alerts go to Discord #alerts (same webhook as Flux's discord-alerts provider).
+      # The URL is read from the mounted alertmanager-discord Secret (ESO), never from values.
+      config:
+        global:
+          resolve_timeout: 5m
+        route:
+          group_by:
+            - namespace
+            - alertname
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 12h
+          receiver: discord
+          routes:
+            # Always-firing helper alerts and info-level noise stay out of Discord
+            - receiver: "null"
+              matchers:
+                - alertname =~ "Watchdog|InfoInhibitor"
+            - receiver: "null"
+              matchers:
+                - severity = "info"
+        inhibit_rules:
+          - source_matchers:
+              - severity = critical
+            target_matchers:
+              - severity =~ warning|info
+            equal:
+              - namespace
+              - alertname
+          - source_matchers:
+              - severity = warning
+            target_matchers:
+              - severity = info
+            equal:
+              - namespace
+              - alertname
+          - source_matchers:
+              - alertname = InfoInhibitor
+            target_matchers:
+              - severity = info
+            equal:
+              - namespace
+          - target_matchers:
+              - alertname = InfoInhibitor
+        receivers:
+          - name: "null"
+          - name: discord
+            discord_configs:
+              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord/webhook-url
+                send_resolved: true
+        templates:
+          - /etc/alertmanager/config/*.tmpl
       alertmanagerSpec:
         replicas: 1
+        # Mounted at /etc/alertmanager/secrets/alertmanager-discord/
+        secrets:
+          - alertmanager-discord
         storage:
           volumeClaimTemplate:
             spec:
