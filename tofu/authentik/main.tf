@@ -50,3 +50,20 @@ variable "grafana_oidc_client_secret" {
   sensitive = true
 }
 
+variable "immich_oidc_client_id" {
+  type = string
+}
+
+variable "immich_oidc_client_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "dawarich_oidc_client_id" {
+  type = string
+}
+
+variable "dawarich_oidc_client_secret" {
+  type      = string
+  sensitive = true
+}

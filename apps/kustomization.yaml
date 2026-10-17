@@ -3,8 +3,10 @@ kind: Kustomization
 resources:
   - authentik
   - bluemap
+  - dawarich
   - monitoring
   - flux-ui
+  - immich
   - longhorn-ui
   - nextcloud
   - sure

@@ -57,6 +57,20 @@ resource "authentik_application" "nextcloud" {
   meta_icon         = "https://nextcloud.com/c/uploads/2025/10/Nextcloud_02-blue-logo.svg"
 }
 
+resource "authentik_application" "immich" {
+  name              = "Immich"
+  slug              = "immich"
+  protocol_provider = authentik_provider_oauth2.immich.id
+  meta_icon         = "https://raw.githubusercontent.com/immich-app/immich/v3.3.3/design/immich-logo.svg"
+}
+
+resource "authentik_application" "dawarich" {
+  name              = "Dawarich"
+  slug              = "dawarich"
+  protocol_provider = authentik_provider_oauth2.dawarich.id
+  meta_icon         = "https://raw.githubusercontent.com/Freika/dawarich/1.16.0/public/icon.svg"
+}
+
 resource "authentik_outpost" "embedded" {
   name               = "authentik Embedded Outpost"
   type               = "proxy"

@@ -50,8 +50,9 @@ resource "authentik_provider_oauth2" "sure" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "strict"
-      url           = "https://sure.trashstack.dev/auth/openid_connect/callback"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://sure.trashstack.dev/auth/openid_connect/callback"
     }
   ]
 }
@@ -75,8 +76,9 @@ resource "authentik_provider_oauth2" "grafana" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "strict"
-      url           = "https://grafana.trashstack.dev/login/generic_oauth"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://grafana.trashstack.dev/login/generic_oauth"
     }
   ]
 }
@@ -101,8 +103,72 @@ resource "authentik_provider_oauth2" "nextcloud" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "strict"
-      url           = "https://cloud.trashstack.dev/apps/user_oidc/code"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://cloud.trashstack.dev/apps/user_oidc/code"
+    }
+  ]
+}
+
+# OAuth2/OIDC provider for Immich (web and iOS app)
+resource "authentik_provider_oauth2" "immich" {
+  name               = "Immich"
+  client_id          = var.immich_oidc_client_id
+  client_secret      = var.immich_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.implicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+
+  access_code_validity   = "minutes=1"
+  access_token_validity  = "minutes=5"
+  refresh_token_validity = "days=30"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://photos.trashstack.dev/auth/login"
+    },
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://photos.trashstack.dev/user-settings"
+    },
+    {
+      # Immich mobile app
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "app.immich:///oauth-callback"
+    }
+  ]
+}
+
+# OAuth2/OIDC provider for Dawarich
+resource "authentik_provider_oauth2" "dawarich" {
+  name               = "Dawarich"
+  client_id          = var.dawarich_oidc_client_id
+  client_secret      = var.dawarich_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.implicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+
+  access_code_validity   = "minutes=1"
+  access_token_validity  = "minutes=5"
+  refresh_token_validity = "days=30"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://timeline.trashstack.dev/users/auth/openid_connect/callback"
     }
   ]
 }

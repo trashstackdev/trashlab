@@ -29,6 +29,11 @@ spec:
         port: 9100
         expose:
           default: false
+      websecure:
+        transport:
+          respondingTimeouts:
+            # Traefik v3 cuts requests off after 60s, which breaks large uploads (Immich videos over mobile data)
+            readTimeout: 600s
     providers:
       kubernetesCRD:
         allowCrossNamespace: true
