@@ -50,8 +50,9 @@ resource "authentik_provider_oauth2" "sure" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "strict"
-      url           = "https://sure.trashstack.dev/auth/openid_connect/callback"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://sure.trashstack.dev/auth/openid_connect/callback"
     }
   ]
 }
@@ -75,8 +76,9 @@ resource "authentik_provider_oauth2" "grafana" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "strict"
-      url           = "https://grafana.trashstack.dev/login/generic_oauth"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://grafana.trashstack.dev/login/generic_oauth"
     }
   ]
 }
@@ -101,8 +103,9 @@ resource "authentik_provider_oauth2" "nextcloud" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "strict"
-      url           = "https://cloud.trashstack.dev/apps/user_oidc/code"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://cloud.trashstack.dev/apps/user_oidc/code"
     }
   ]
 }
@@ -126,17 +129,20 @@ resource "authentik_provider_oauth2" "immich" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "strict"
-      url           = "https://photos.trashstack.dev/auth/login"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://photos.trashstack.dev/auth/login"
     },
     {
-      matching_mode = "strict"
-      url           = "https://photos.trashstack.dev/user-settings"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://photos.trashstack.dev/user-settings"
     },
     {
       # Immich mobile app
-      matching_mode = "strict"
-      url           = "app.immich:///oauth-callback"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "app.immich:///oauth-callback"
     }
   ]
 }
@@ -160,8 +166,9 @@ resource "authentik_provider_oauth2" "dawarich" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "strict"
-      url           = "https://timeline.trashstack.dev/users/auth/openid_connect/callback"
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://timeline.trashstack.dev/users/auth/openid_connect/callback"
     }
   ]
 }
