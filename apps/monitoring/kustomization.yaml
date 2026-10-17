@@ -4,3 +4,4 @@ resources:
   - externalsecret.yaml
   - servicemonitors.yaml
   - podmonitor.yaml
+  - prometheusrules.yaml

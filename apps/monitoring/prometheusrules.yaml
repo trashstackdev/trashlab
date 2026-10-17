@@ -1,0 +1,44 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: trashlab
+  namespace: monitoring
+spec:
+  groups:
+    - name: backups
+      rules:
+        # longhorn_backup_state: 0=New, 1=Pending, 2=InProgress, 3=Completed, 4=Error, 5=Unknown
+        - alert: LonghornBackupFailed
+          expr: longhorn_backup_state == 4
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn backup {{ $labels.backup }} of volume {{ $labels.volume }} failed"
+            description: "Check the backup target and the backup in the Longhorn UI. Delete the failed backup once fixed, or this keeps firing."
+        - alert: LonghornBackupStale
+          expr: time() - kube_cronjob_status_last_successful_time{namespace="longhorn-system", cronjob="backup-daily"} > 26 * 3600
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn backup-daily has not succeeded for {{ $value | humanizeDuration }}"
+            description: "Check the backup-daily job pods in longhorn-system and the backup target."
+        - alert: LonghornBackupNeverSucceeded
+          expr: kube_cronjob_info{namespace="longhorn-system", cronjob="backup-daily"} unless on(namespace, cronjob) kube_cronjob_status_last_successful_time
+          for: 26h
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn backup-daily has never completed successfully"
+            description: "The CronJob exists but has no successful run. Check its job pods in longhorn-system."
+    - name: secrets
+      rules:
+        - alert: ExternalSecretNotSynced
+          expr: externalsecret_status_condition{condition="Ready", status="False"} == 1
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ExternalSecret {{ $labels.namespace }}/{{ $labels.name }} is not syncing from Bitwarden SM"
+            description: "Workloads keep the last synced value. Check the ExternalSecret events and the bitwarden-sdk-server pod in external-secrets."
