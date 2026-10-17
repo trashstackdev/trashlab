@@ -1,0 +1,35 @@
+---
+# Daily incremental backup of every volume to the storage box backup target.
+# All Longhorn volumes join the "default" group automatically, so new PVCs are covered too.
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-daily
+  namespace: longhorn-system
+spec:
+  name: backup-daily
+  task: backup
+  cron: "0 3 * * *"
+  retain: 7
+  concurrency: 1
+  groups:
+    - default
+  labels: {}
+---
+# Weekly trim so blocks freed by deleted files are released from the volume (and from backups).
+# Also covers "no-backup" volumes, which keeps Longhorn from adding them back to the default group.
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: trim-weekly
+  namespace: longhorn-system
+spec:
+  name: trim-weekly
+  task: filesystem-trim
+  cron: "0 2 * * 0"
+  retain: 0
+  concurrency: 1
+  groups:
+    - default
+    - no-backup
+  labels: {}

@@ -7,4 +7,5 @@ resources:
   - external-secrets/
   - flux-operator/
   - longhorn/
+  - reloader/
   - traefik/

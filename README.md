@@ -22,6 +22,7 @@ My GitOps configuration for a single-node k3s cluster on a Hetzner EX44, managed
 | cert-manager | TLS via Let's Encrypt |
 | Longhorn | Persistent block storage |
 | External Secrets | Secrets from Bitwarden SM |
+| Reloader | Restarts workloads when their Secrets change |
 | Authentik | SSO / ForwardAuth |
 
 ## Structure

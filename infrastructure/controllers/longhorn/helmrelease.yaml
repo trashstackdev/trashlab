@@ -23,5 +23,7 @@ spec:
       backupTarget: "cifs://u409469.your-storagebox.de/backup"
       backupTargetCredentialSecret: "cifs-secret"
       defaultReplicaCount: 1
+      # Without this, trim cannot free blocks still referenced by snapshots
+      removeSnapshotsDuringFilesystemTrim: true
     persistence:
       defaultClassReplicaCount: 1

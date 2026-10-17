@@ -92,6 +92,11 @@ spec:
         ruleSelectorNilUsesHelmValues: false
         storageSpec:
           volumeClaimTemplate:
+            # Metrics are disposable and churn heavily: keep them out of Longhorn backups
+            metadata:
+              labels:
+                recurring-job.longhorn.io/source: enabled
+                recurring-job-group.longhorn.io/no-backup: enabled
             spec:
               storageClassName: longhorn
               accessModes:
@@ -189,7 +194,8 @@ spec:
             datasource: Prometheus
           longhorn:
             gnetId: 17626
-            revision: 2
+            # Only revision 1 exists on grafana.com
+            revision: 1
             datasource: Prometheus
           cert-manager:
             gnetId: 20842
