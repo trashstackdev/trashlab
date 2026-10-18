@@ -84,7 +84,7 @@ subjects:
     name: readonly-agent
     namespace: kube-system
 ---
-# Query Prometheus and Alertmanager through the API server proxy (kubectl get --raw .../proxy/...)
+# Query Prometheus, Alertmanager and VictoriaLogs (logs) through the API server proxy (kubectl get --raw .../proxy/...)
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -99,6 +99,8 @@ rules:
       - kube-prometheus-stack-prometheus:http-web
       - kube-prometheus-stack-alertmanager
       - kube-prometheus-stack-alertmanager:http-web
+      - victoria-logs
+      - victoria-logs:http
     verbs: [get]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
