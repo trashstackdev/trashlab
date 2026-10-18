@@ -33,12 +33,13 @@ spec:
       persistentVolume:
         enabled: true
         existingClaim: victoria-logs
+      # OOM-killed at 1Gi while Vector replayed weeks-old pod log lines in big bursts
       resources:
         requests:
           cpu: 50m
-          memory: 128Mi
+          memory: 256Mi
         limits:
-          memory: 1Gi
+          memory: 2Gi
 
     vector:
       enabled: true
@@ -75,7 +76,10 @@ spec:
         sources:
           k8s:
             type: kubernetes_logs
-            # Skip pod log files untouched for a day, so a restart doesn't re-read old history
+            # Only new lines: files of long-running pods still hold weeks-old lines, and replaying them
+            # in bursts OOM-killed both Vector and VictoriaLogs. Checkpoints keep the position afterwards.
+            read_from: end
+            # Skip pod log files untouched for a day
             ignore_older_secs: 86400
           journald:
             type: journald
@@ -98,6 +102,13 @@ spec:
           # The chart fills in the VictoriaLogs endpoint for elasticsearch sinks without one
           vlogs:
             type: elasticsearch
+            # Bounded on disk (/var/lib/vector) instead of growing in memory when VictoriaLogs is down
+            buffer:
+              type: disk
+              max_size: 268435488
+              when_full: block
+            batch:
+              max_bytes: 4000000
             inputs: [parser]
             mode: bulk
             api_version: v8
@@ -105,6 +116,7 @@ spec:
             healthcheck:
               enabled: false
             request:
+              concurrency: 2
               headers:
                 VL-Time-Field: timestamp
                 VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
@@ -113,6 +125,13 @@ spec:
                 ProjectID: "0"
           vlogs-journal:
             type: elasticsearch
+            # Bounded on disk (/var/lib/vector) instead of growing in memory when VictoriaLogs is down
+            buffer:
+              type: disk
+              max_size: 268435488
+              when_full: block
+            batch:
+              max_bytes: 4000000
             inputs: [journald]
             mode: bulk
             api_version: v8
@@ -120,6 +139,7 @@ spec:
             healthcheck:
               enabled: false
             request:
+              concurrency: 2
               headers:
                 VL-Time-Field: timestamp
                 VL-Stream-Fields: host,_SYSTEMD_UNIT
