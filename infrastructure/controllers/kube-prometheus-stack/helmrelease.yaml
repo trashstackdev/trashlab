@@ -221,6 +221,15 @@ spec:
           use_refresh_token: true
           signout_redirect_url: https://auth.trashstack.dev/application/o/grafana/end-session/
 
+      # Search logs from VictoriaLogs (infrastructure/controllers/victoria-logs)
+      plugins:
+        - victoriametrics-logs-datasource
+      additionalDataSources:
+        - name: VictoriaLogs
+          type: victoriametrics-logs-datasource
+          access: proxy
+          url: http://victoria-logs.monitoring.svc:9428
+
       # ~400 MiB typical, 680 MiB peak (Oct 2026)
       resources:
         requests:
