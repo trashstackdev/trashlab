@@ -30,8 +30,8 @@ spec:
     immich:
       persistence:
         library:
-          # Storage Box over SMB, mounted at /data (see storage.yaml)
-          existingClaim: immich-library
+          # Storage Box over SMB, mounted at /data (see library-volume.yaml)
+          existingClaim: immich-library-v2
       # Config file rendered by ESO (externalsecrets.yaml), since it holds the OIDC client secret
       existingConfiguration: immich-config
       configurationKind: Secret

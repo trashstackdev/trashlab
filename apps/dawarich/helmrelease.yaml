@@ -59,7 +59,7 @@ spec:
               OIDC_ISSUER: https://auth.trashstack.dev/application/o/dawarich/
               OIDC_REDIRECT_URI: https://timeline.trashstack.dev/users/auth/openid_connect/callback
               OIDC_PROVIDER_NAME: Authentik
-              # Authentik only. Also locks out the seeded demo@dawarich.app admin, which has a public default password.
+              # Authentik only
               ALLOW_EMAIL_PASSWORD_LOGIN: "false"
             envFrom: &envFrom
               # SECRET_KEY_BASE, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET

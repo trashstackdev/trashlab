@@ -1,0 +1,47 @@
+# Photo library (originals, uploads, profile pictures, DB dumps) on a Hetzner Storage Box sub-account.
+# Too big for the local NVMe. Protected by Storage Box snapshots, not by Longhorn backups.
+# The share address is SOPS-encrypted because this repo is public. Edit with: sops apps/immich/library-volume.yaml
+# A PV's source can't change after creation: point to a new sub-account by creating a new PV/PVC pair.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+    name: immich-library-v2
+spec:
+    capacity:
+        storage: 1Ti
+    accessModes:
+        - ReadWriteMany
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: ""
+    mountOptions:
+        - vers=3.1.1
+        # Encrypt SMB traffic between ex44 and the Storage Box
+        - seal
+        - dir_mode=0770
+        - file_mode=0660
+        - nobrl
+        - noserverino
+    csi:
+        driver: smb.csi.k8s.io
+        # Must be unique per volume in the cluster
+        volumeHandle: immich-library-v2
+        volumeAttributes:
+            source: ENC[AES256_GCM,data:WOhkFHmCig/isahpZlySE80RnpTpd8Hi3MVk8JjDY8UBKx9LEydil3N365FdjS9RLGCBl+D58PeOXOI6FT2Sy2bz9KY=,iv:kO5+r4ee8jTjaKhn4rgb4Z0CF0EljFo6yaNCiWxCnsw=,tag:vQkiMfW22aLETP5f/yronA==,type:str]
+        nodeStageSecretRef:
+            name: immich-smb
+            namespace: immich
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBiRWpkdElVRVY0bTJaeFJN
+            TThSV3JzK2x2R09VbmlXK3BUUWZHTHhGcVE0CkFwTnFQSlRoMlNiV1FFeFJoZ2Z4
+            MEU1WVpKSGpCQ3MwRlJhNGk4WUVhVUEKLS0tIGxCaFdJcVVMUTh6R3hoQzk3TzVC
+            dVp5dlA1Y3ZYOVdGUFRhazZXMG5XTTAKs8I8RkwTYJ7ve1YaNmOEKifYeTeC4tYV
+            kLqv2gKGfkwXFWu+3ZHS22x7TTMshC3BziYfs2N89rvX0uzKCSJWLw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1guwhf7ux6kphahck7gpulsjcwc58w8uv8y4s2wpsh7cpjhae6yzqa8l2dh
+    encrypted_regex: ^source$
+    lastmodified: "2026-10-18T10:07:28Z"
+    mac: ENC[AES256_GCM,data:5hKq9NYWGE6hsG+uADOp8ntxnucHbNnxRuMbjYFuELT7p3pHNLWMTtd7rUVBME0cz7DHu0O0ci5fKwe4UoNAZ/aQg/YOp38L9Brvi355t3o/+DOBjcQal29xbEPKmlPK4fQW+H1vRv8AGKXSQGR+hmOjVhjbbS19tDMtNL+ioH4=,iv:cKvZ1VVNeL1Jz+kHAmUVSeuCbouSx2MPOlz4ojyyQpM=,tag:LAsteKQDBBnX9tQIsfZD8A==,type:str]
+    version: 3.13.3

@@ -7,6 +7,11 @@ spec:
   interval: 1h
   path: ./apps
   prune: true
+  # SOPS-encrypted values in apps/ (e.g. the Immich Storage Box address), same key as infrastructure-configs
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
   sourceRef:
     kind: GitRepository
     name: flux-system

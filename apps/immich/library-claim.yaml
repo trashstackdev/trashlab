@@ -1,0 +1,14 @@
+# Claim for the Storage Box library volume in library-volume.yaml (SOPS-encrypted address)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library-v2
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: immich-library-v2
+  resources:
+    requests:
+      storage: 1Ti

@@ -6,4 +6,6 @@ resources:
   - externalsecrets.yaml
   - database.yaml
   - storage.yaml
+  - library-volume.yaml
+  - library-claim.yaml
   - helmrelease.yaml
