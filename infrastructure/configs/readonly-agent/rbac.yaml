@@ -1,0 +1,116 @@
+# Read-only cluster access for AI agents and other automation (agent-agnostic).
+# Used by an AI coding agent running on the server under its own unprivileged Linux user.
+# Can read workloads, logs, CRDs and cluster objects, but never Secrets, and cannot exec,
+# port-forward or change anything. The roles are generic; give each additional agent its own
+# ServiceAccount and token bound to the same roles, so access stays traceable and revocable.
+# The kubeconfig is built from the token Secret below (see README.md in this folder).
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: readonly-agent
+  namespace: kube-system
+---
+# Long-lived token, filled in by Kubernetes (no data in git)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: readonly-agent-token
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: readonly-agent
+type: kubernetes.io/service-account-token
+---
+# Built-in `view`: namespaced resources plus pod logs, aggregated Flux, cert-manager,
+# External Secrets and metrics views. Excludes Secrets, exec and port-forward.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: readonly-agent-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: readonly-agent
+    namespace: kube-system
+---
+# What `view` leaves out: cluster-scoped objects and CRDs that don't aggregate into `view`
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: readonly-extra
+rules:
+  - apiGroups: [""]
+    resources: [nodes, persistentvolumes, namespaces]
+    verbs: [get, list, watch]
+  - apiGroups: [storage.k8s.io]
+    resources: [storageclasses, volumeattachments, csidrivers, csinodes]
+    verbs: [get, list, watch]
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs: [get, list, watch]
+  - apiGroups: [apiregistration.k8s.io]
+    resources: [apiservices]
+    verbs: [get, list, watch]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterroles, clusterrolebindings, roles, rolebindings]
+    verbs: [get, list, watch]
+  - apiGroups: [admissionregistration.k8s.io]
+    resources: [mutatingwebhookconfigurations, validatingwebhookconfigurations]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingressclasses]
+    verbs: [get, list, watch]
+  - apiGroups: [scheduling.k8s.io]
+    resources: [priorityclasses]
+    verbs: [get, list, watch]
+  # Operator CRDs; none of them hold secret values (they reference Secrets by name)
+  - apiGroups: [longhorn.io, postgresql.cnpg.io, traefik.io, monitoring.coreos.com, gateway.networking.k8s.io]
+    resources: ["*"]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: readonly-agent-extra
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: readonly-extra
+subjects:
+  - kind: ServiceAccount
+    name: readonly-agent
+    namespace: kube-system
+---
+# Query Prometheus and Alertmanager through the API server proxy (kubectl get --raw .../proxy/...)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: readonly-monitoring-proxy
+  namespace: monitoring
+rules:
+  - apiGroups: [""]
+    resources: [services/proxy]
+    # The proxy URL names the service with its port (name:port), so list both forms
+    resourceNames:
+      - kube-prometheus-stack-prometheus
+      - kube-prometheus-stack-prometheus:http-web
+      - kube-prometheus-stack-alertmanager
+      - kube-prometheus-stack-alertmanager:http-web
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: readonly-agent-monitoring-proxy
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: readonly-monitoring-proxy
+subjects:
+  - kind: ServiceAccount
+    name: readonly-agent
+    namespace: kube-system
