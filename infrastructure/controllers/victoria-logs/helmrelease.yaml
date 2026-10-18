@@ -45,12 +45,13 @@ spec:
       image:
         # The Debian image ships journalctl, which the journald source needs
         tag: 0.58.0-debian
+      # ~190 MiB steady; reading the existing pod log files on first start got it OOM-killed at 512 MiB
       resources:
         requests:
           cpu: 50m
-          memory: 128Mi
+          memory: 256Mi
         limits:
-          memory: 512Mi
+          memory: 1Gi
       # Host journal (k3s, sshd, kernel), read-only. /var/log/journal comes with the chart's /var/log mount.
       extraVolumes:
         - name: run-journal
@@ -74,6 +75,8 @@ spec:
         sources:
           k8s:
             type: kubernetes_logs
+            # Skip pod log files untouched for a day, so a restart doesn't re-read old history
+            ignore_older_secs: 86400
           journald:
             type: journald
             # Start at the time of the first run instead of importing the whole journal history
