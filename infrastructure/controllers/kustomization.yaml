@@ -10,3 +10,4 @@ resources:
   - longhorn/
   - reloader/
   - traefik/
+  - victoria-logs/

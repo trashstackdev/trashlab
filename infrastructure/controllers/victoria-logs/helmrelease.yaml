@@ -1,0 +1,125 @@
+---
+# Central logs: VictoriaLogs stores pod logs and the host journal, Vector (DaemonSet) collects them.
+# Size is capped: oldest logs are deleted after 30 days or once 10 GiB are used, whichever comes first.
+# No ingress; logs are searched in Grafana (VictoriaLogs datasource).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-logs
+  namespace: monitoring
+spec:
+  interval: 1h
+  releaseName: victoria-logs
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: victoria-logs-single
+      version: 0.13.10
+      sourceRef:
+        kind: HelmRepository
+        name: victoriametrics
+        namespace: flux-system
+  values:
+    server:
+      fullnameOverride: victoria-logs
+      retentionPeriod: 30d
+      # GiB
+      retentionDiskSpaceUsage: 10
+      persistentVolume:
+        enabled: true
+        existingClaim: victoria-logs
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 1Gi
+
+    vector:
+      enabled: true
+      image:
+        # The Debian image ships journalctl, which the journald source needs
+        tag: 0.58.0-debian
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+      # Host journal (k3s, sshd, kernel), read-only. /var/log/journal comes with the chart's /var/log mount.
+      extraVolumes:
+        - name: run-journal
+          hostPath:
+            path: /run/log/journal
+        - name: machine-id
+          hostPath:
+            path: /etc/machine-id
+            type: File
+      extraVolumeMounts:
+        - name: run-journal
+          mountPath: /run/log/journal
+          readOnly: true
+        - name: machine-id
+          mountPath: /etc/machine-id
+          readOnly: true
+      customConfig:
+        data_dir: /vector-data-dir
+        api:
+          enabled: false
+        sources:
+          k8s:
+            type: kubernetes_logs
+          journald:
+            type: journald
+            # Start at the time of the first run instead of importing the whole journal history
+            since_now: true
+          internal_metrics:
+            type: internal_metrics
+        transforms:
+          parser:
+            type: remap
+            inputs: [k8s]
+            source: |
+              .log = parse_json(.message) ?? .message
+              del(.message)
+        sinks:
+          exporter:
+            type: prometheus_exporter
+            address: 0.0.0.0:9090
+            inputs: [internal_metrics]
+          # The chart fills in the VictoriaLogs endpoint for elasticsearch sinks without one
+          vlogs:
+            type: elasticsearch
+            inputs: [parser]
+            mode: bulk
+            api_version: v8
+            compression: gzip
+            healthcheck:
+              enabled: false
+            request:
+              headers:
+                VL-Time-Field: timestamp
+                VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+                VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+                AccountID: "0"
+                ProjectID: "0"
+          vlogs-journal:
+            type: elasticsearch
+            inputs: [journald]
+            mode: bulk
+            api_version: v8
+            compression: gzip
+            healthcheck:
+              enabled: false
+            request:
+              headers:
+                VL-Time-Field: timestamp
+                VL-Stream-Fields: host,_SYSTEMD_UNIT
+                VL-Msg-Field: message
+                AccountID: "0"
+                ProjectID: "0"
