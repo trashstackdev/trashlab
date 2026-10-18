@@ -71,6 +71,13 @@ resource "authentik_application" "dawarich" {
   meta_icon         = "https://raw.githubusercontent.com/Freika/dawarich/1.16.0/public/icon.svg"
 }
 
+resource "authentik_application" "forgejo" {
+  name              = "Forgejo"
+  slug              = "forgejo"
+  protocol_provider = authentik_provider_oauth2.forgejo.id
+  meta_icon         = "https://code.forgejo.org/forgejo/forgejo/raw/branch/forgejo/assets/logo.svg"
+}
+
 resource "authentik_outpost" "embedded" {
   name               = "authentik Embedded Outpost"
   type               = "proxy"

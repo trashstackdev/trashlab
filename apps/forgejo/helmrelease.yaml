@@ -1,0 +1,102 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: forgejo
+  namespace: forgejo
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: forgejo
+    namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  # The chart pins the Forgejo LTS release it was built for (no separate image tag to bump)
+  values:
+    gitea:
+      # Break-glass admin from Bitwarden; the password follows the Secret on every start
+      admin:
+        existingSecret: forgejo-admin
+        email: admin@git.trashstack.dev
+        passwordMode: keepUpdated
+      oauth:
+        - name: authentik
+          provider: openidConnect
+          existingSecret: forgejo-oauth
+          autoDiscoverUrl: https://auth.trashstack.dev/application/o/forgejo/.well-known/openid-configuration
+          scopes: openid email profile
+      # Secrets reach app.ini through env vars, never through Helm values
+      additionalConfigFromEnvs:
+        - name: FORGEJO__DATABASE__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-db
+              key: password
+      config:
+        server:
+          DOMAIN: git.trashstack.dev
+          ROOT_URL: https://git.trashstack.dev/
+          # HTTPS only for now: the host's sshd owns port 22
+          DISABLE_SSH: true
+          START_SSH_SERVER: false
+        database:
+          DB_TYPE: postgres
+          HOST: forgejo-db-rw:5432
+          NAME: forgejo
+          USER: forgejo
+          SSL_MODE: require
+        service:
+          # Single-user instance: no sign-ups, nothing visible without login
+          DISABLE_REGISTRATION: true
+          REQUIRE_SIGNIN_VIEW: true
+          DEFAULT_KEEP_EMAIL_PRIVATE: true
+        # First Authentik login links to the existing admin account (asks for its password once)
+        oauth2_client:
+          ENABLE_AUTO_REGISTRATION: false
+          ACCOUNT_LINKING: login
+        openid:
+          ENABLE_OPENID_SIGNIN: false
+          ENABLE_OPENID_SIGNUP: false
+        repository:
+          DEFAULT_PRIVATE: private
+        # Keep logins across restarts
+        session:
+          PROVIDER: db
+        # Renovate tracks updates
+        cron.update_checker:
+          ENABLED: false
+        actions:
+          ENABLED: false
+
+    persistence:
+      enabled: true
+      claimName: forgejo-data
+      storageClass: longhorn
+      size: 20Gi
+
+    ingress:
+      enabled: true
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        cert-manager.io/cluster-issuer: letsencrypt-production
+      hosts:
+        - host: git.trashstack.dev
+          paths:
+            - path: /
+              pathType: Prefix
+              port: http
+      tls:
+        - hosts:
+            - git.trashstack.dev
+          secretName: git-trashstack-dev-tls
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 1Gi

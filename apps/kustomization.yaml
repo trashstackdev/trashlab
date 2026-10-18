@@ -6,6 +6,7 @@ resources:
   - dawarich
   - monitoring
   - flux-ui
+  - forgejo
   - immich
   - longhorn-ui
   - nextcloud

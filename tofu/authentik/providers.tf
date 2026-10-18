@@ -176,3 +176,31 @@ resource "authentik_provider_oauth2" "dawarich" {
     }
   ]
 }
+
+# OAuth2/OIDC provider for Forgejo
+resource "authentik_provider_oauth2" "forgejo" {
+  name               = "Forgejo"
+  client_id          = var.forgejo_oidc_client_id
+  client_secret      = var.forgejo_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.implicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+  # Set explicitly: the provider creates new OAuth2 providers with no grant types, which breaks login
+  grant_types = ["authorization_code", "refresh_token"]
+
+  access_code_validity   = "minutes=1"
+  access_token_validity  = "minutes=5"
+  refresh_token_validity = "days=30"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://git.trashstack.dev/user/oauth2/authentik/callback"
+    }
+  ]
+}
