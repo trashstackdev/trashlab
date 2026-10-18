@@ -33,7 +33,8 @@ spec:
         transport:
           respondingTimeouts:
             # Traefik v3 cuts requests off after 60s, which breaks large uploads (Immich videos over mobile data)
-            readTimeout: 600s
+            # 600s still cut off 0.7-1 GB videos at ~1.5 MB/s uplink; 3600s covers ~5 GB
+            readTimeout: 3600s
     # ~130 MiB typical (Oct 2026)
     resources:
       requests:
