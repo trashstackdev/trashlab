@@ -12,6 +12,7 @@ My GitOps configuration for a single-node k3s cluster on a Hetzner EX44, managed
 | Nextcloud | https://cloud.trashstack.dev |
 | Immich | https://photos.trashstack.dev |
 | Dawarich | https://timeline.trashstack.dev |
+| Forgejo | https://git.trashstack.dev |
 | Bluemap | https://bluemap.trashstack.dev |
 
 ## Stack

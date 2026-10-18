@@ -67,3 +67,12 @@ variable "dawarich_oidc_client_secret" {
   type      = string
   sensitive = true
 }
+
+variable "forgejo_oidc_client_id" {
+  type = string
+}
+
+variable "forgejo_oidc_client_secret" {
+  type      = string
+  sensitive = true
+}
