@@ -41,6 +41,17 @@ spec:
         memory: 128Mi
       limits:
         memory: 512Mi
+    # Access log only for failed (5xx) and slow (>60s) requests, to keep it small.
+    # Headers (chart default) and query parameters (share keys, tokens) are dropped.
+    accessLog:
+      enabled: true
+      format: json
+      filters:
+        statusCodes: "500-599"
+        minDuration: 60s
+      fields:
+        queryParameters:
+          defaultMode: drop
     providers:
       kubernetesCRD:
         allowCrossNamespace: true
