@@ -66,6 +66,20 @@ spec:
                     secretKeyRef:
                       name: immich-db
                       key: password
+              # The chart allows 1s; while thumbnailing and transcoding the API can take longer, the pod then
+              # drops out of the Service briefly and in-flight uploads fail
+              probes:
+                liveness: &probe
+                  enabled: true
+                  custom: true
+                  spec:
+                    httpGet:
+                      path: /api/server/ping
+                      port: http
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 6
+                readiness: *probe
               # ~3.4 GiB while importing (Oct 2026); thumbnailing and transcoding run in this container
               resources:
                 requests:
@@ -73,6 +87,11 @@ spec:
                   memory: 2Gi
                 limits:
                   memory: 8Gi
+      service:
+        main:
+          annotations:
+            # See serverstransport.yaml
+            traefik.ingress.kubernetes.io/service.serverstransport: immich-immich@kubernetescrd
       ingress:
         main:
           enabled: true

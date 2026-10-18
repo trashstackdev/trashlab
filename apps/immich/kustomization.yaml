@@ -6,4 +6,5 @@ resources:
   - externalsecrets.yaml
   - database.yaml
   - storage.yaml
+  - serverstransport.yaml
   - helmrelease.yaml

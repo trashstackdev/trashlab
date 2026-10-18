@@ -1,0 +1,12 @@
+---
+# Traefik -> Immich connections: Node.js closes idle keep-alive connections after 5s, Traefik keeps them
+# for 90s by default. Reusing one Node just closed gives a 502 on uploads (Traefik won't retry a POST).
+# Closing them on Traefik's side first avoids that race.
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  forwardingTimeouts:
+    idleConnTimeout: 4s
