@@ -41,15 +41,14 @@ spec:
 
     server:
       persistence:
-        # Thumbnails and transcoded videos on local NVMe instead of the Storage Box
+        # Thumbnails on local NVMe for a fast UI. Transcoded videos stay on the Storage Box (/data):
+        # they filled the 50 GiB volume within a day of importing, and streaming them over SMB is fine.
         thumbs:
           enabled: true
           existingClaim: immich-thumbs
           globalMounts:
             - path: /data/thumbs
               subPath: thumbs
-            - path: /data/encoded-video
-              subPath: encoded-video
       controllers:
         main:
           containers:
