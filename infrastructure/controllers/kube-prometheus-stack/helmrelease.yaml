@@ -123,10 +123,18 @@ spec:
           repeat_interval: 12h
           receiver: discord
           routes:
+            # Dead man's switch: Watchdog always fires, so Alertmanager pings healthchecks.io every minute.
+            # healthchecks.io alerts (outside this cluster) when the pings stop, e.g. when ex44 is down.
+            - receiver: healthchecks
+              matchers:
+                - alertname = "Watchdog"
+              group_wait: 0s
+              group_interval: 1m
+              repeat_interval: 1m
             # Always-firing helper alerts and info-level noise stay out of Discord
             - receiver: "null"
               matchers:
-                - alertname =~ "Watchdog|InfoInhibitor"
+                - alertname = "InfoInhibitor"
             - receiver: "null"
               matchers:
                 - severity = "info"
@@ -159,13 +167,18 @@ spec:
             discord_configs:
               - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord/webhook-url
                 send_resolved: true
+          - name: healthchecks
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/alertmanager-healthchecks/ping-url
+                send_resolved: false
         templates:
           - /etc/alertmanager/config/*.tmpl
       alertmanagerSpec:
         replicas: 1
-        # Mounted at /etc/alertmanager/secrets/alertmanager-discord/
+        # Mounted at /etc/alertmanager/secrets/<name>/. Both must exist, or Alertmanager can't start.
         secrets:
           - alertmanager-discord
+          - alertmanager-healthchecks
         storage:
           volumeClaimTemplate:
             spec:
