@@ -234,6 +234,8 @@ spec:
         - victoriametrics-logs-datasource
       additionalDataSources:
         - name: VictoriaLogs
+          # Fixed uid, referenced by the trashlab overview dashboard
+          uid: victorialogs
           type: victoriametrics-logs-datasource
           access: proxy
           url: http://victoria-logs.monitoring.svc:9428

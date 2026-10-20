@@ -13,3 +13,10 @@ spec:
     kind: OCIRepository
     name: flux-operator
     namespace: flux-system
+  values:
+    # flux_resource_info{kind,name,ready,suspended,...} for every Flux object, for the overview dashboard
+    serviceMonitor:
+      create: true
+    # How often the operator refreshes those metrics (default 5m)
+    reporting:
+      interval: 30s

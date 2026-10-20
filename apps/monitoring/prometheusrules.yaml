@@ -61,8 +61,10 @@ spec:
         # k8up counts a backup as successful even when restic couldn't read some files (exit code 3), so watch
         # restic's own error count, pushed through the Pushgateway. Skips the raw Bitnami Postgres and Redis
         # volumes: files vanish there while the database runs, and their SQL dumps are the real backup.
+        # The pvc label is the snapshot path (/data/<pvc> or /<namespace>-<container>.sql), and regex matchers
+        # must match the whole value.
         - alert: K8upResticErrors
-          expr: k8up_backup_restic_last_errors{pvc!~"data-.+-postgresql-0|redis-data-.+"} > 0
+          expr: k8up_backup_restic_last_errors{pvc!~"/data/(data-.+-postgresql-0|redis-data-.+)"} > 0
           for: 5m
           labels:
             severity: critical
