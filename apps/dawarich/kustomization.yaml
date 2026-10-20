@@ -7,4 +7,5 @@ resources:
   - database.yaml
   - pvc.yaml
   - helmrelease.yaml
+  - monitoring.yaml
   - backup.yaml

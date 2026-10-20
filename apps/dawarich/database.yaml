@@ -28,6 +28,11 @@ spec:
         passwordSecret:
           name: dawarich-db
   enableSuperuserAccess: false
+  # Location history stats on top of the default metrics (monitoring.yaml)
+  monitoring:
+    customQueriesConfigMap:
+      - name: dawarich-db-monitoring
+        key: queries
   # Offsite backup (backup.yaml): k8up stores a pg_dump from the instance pod instead of the live data volume.
   # CNPG copies these annotations to the instance pods and PVCs; k8up reads k8up.io/backup only on PVCs
   # and the dump command only on pods.

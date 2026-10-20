@@ -8,4 +8,5 @@ resources:
   - storage.yaml
   - serverstransport.yaml
   - helmrelease.yaml
+  - monitoring.yaml
   - backup.yaml
