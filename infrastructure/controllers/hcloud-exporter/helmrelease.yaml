@@ -1,0 +1,54 @@
+---
+# Hetzner Storage Box usage for the overview dashboard and the StorageBoxAlmostFull alert:
+# hcloud_storagebox_{general_size,data_size,snapshot_size,quota} in bytes and access flags such as
+# hcloud_storagebox_external (reachable from the internet). Only the Storage Box collector runs.
+# Reads the Hetzner Console API (api.hetzner.com) with a read-only project token (apps/monitoring/externalsecret.yaml).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: hcloud-exporter
+  namespace: monitoring
+spec:
+  interval: 1h
+  releaseName: hcloud-exporter
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: hcloud-exporter
+      version: 4.31.0
+      sourceRef:
+        kind: HelmRepository
+        name: promhippie
+        namespace: flux-system
+  values:
+    config:
+      existingSecret: hcloud-exporter
+      tokenKey: token
+    collector:
+      floatingIps: false
+      images: false
+      pricing: false
+      servers: false
+      serverMetrics: false
+      loadBalancers: false
+      sshKeys: false
+      volumes: false
+    # The chart has no switch for this collector yet
+    extraEnvVariables:
+      HCLOUD_EXPORTER_COLLECTOR_STORAGEBOXES: "true"
+    # Each scrape calls the API. Sizes change slowly; above 2m Prometheus would mark the series stale between scrapes.
+    serviceMonitor:
+      enabled: true
+      interval: 2m
+      timeout: 30s
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi

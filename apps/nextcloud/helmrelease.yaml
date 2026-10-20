@@ -28,6 +28,9 @@ spec:
       existingSecret:
         enabled: true
         secretName: nextcloud
+        # serverinfo token for the metrics exporter (externalsecrets.yaml). Registered once in Nextcloud with
+        # occ config:app:set serverinfo token --value <token>
+        tokenKey: nextcloud-token
       extraEnv:
         - name: OVERWRITEPROTOCOL
           value: https
@@ -105,6 +108,27 @@ spec:
         - hosts:
             - cloud.trashstack.dev
           secretName: nextcloud-tls
+
+    # nextcloud-exporter (users, active users, files, shares, free space) behind Service nextcloud-metrics.
+    # It reaches Nextcloud through the cluster Service; its pod IP is in TRUSTED_PROXIES, so Nextcloud
+    # applies OVERWRITEHOST and the internal hostname needs no trusted_domains entry.
+    # Scraped by monitoring.yaml: the chart's own ServiceMonitor would also scrape Nextcloud itself (403).
+    metrics:
+      enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+      securityContext:
+        runAsUser: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
 
     # Run background jobs (log rotation, trash/version expiry) on a schedule instead of on page loads
     cronjob:
