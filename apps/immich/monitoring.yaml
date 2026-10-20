@@ -16,6 +16,12 @@ spec:
 # Library counts for the overview dashboard, added to CNPG's default metrics (database.yaml).
 # Immich's own telemetry has no asset counts. Each column becomes cnpg_<query>_<column>.
 # Columns checked against Immich v3.3.3 (server/src/schema/tables); recheck them on Immich upgrades.
+# CNPG runs these as cnpg_metrics_exporter (pg_monitor only), which needs read access to exactly these columns.
+# There is no declarative field for grants, so they were run once in the instance (psql -d immich); redo them if
+# Immich ever recreates a table:
+#   GRANT SELECT (id, "ownerId", type, status, visibility) ON public.asset TO cnpg_metrics_exporter;
+#   GRANT SELECT ("assetId", "fileSizeInByte") ON public.asset_exif TO cnpg_metrics_exporter;
+#   GRANT SELECT (id, name) ON public."user" TO cnpg_metrics_exporter;
 apiVersion: v1
 kind: ConfigMap
 metadata:

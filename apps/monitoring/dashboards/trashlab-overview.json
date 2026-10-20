@@ -261,7 +261,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(flux_resource_info{ready!=\"True\", suspended!=\"true\"}) or count(flux_resource_info) * 0",
+          "expr": "count(flux_resource_info{ready!=\"True\", suspended!=\"True\"}) or count(flux_resource_info) * 0",
           "editorMode": "code",
           "instant": true,
           "range": false
@@ -2829,6 +2829,21 @@
                 "value": {
                   "type": "color-text"
                 }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "nan",
+                      "result": {
+                        "text": "-",
+                        "index": 8
+                      }
+                    }
+                  }
+                ]
               }
             ]
           },
@@ -2857,6 +2872,16 @@
                       "result": {
                         "text": "over 5 s",
                         "index": 1
+                      }
+                    }
+                  },
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "nan",
+                      "result": {
+                        "text": "-",
+                        "index": 8
                       }
                     }
                   }
@@ -3277,7 +3302,7 @@
     {
       "type": "stat",
       "title": "Immich",
-      "description": "Photos and videos (archived and locked ones included, the bin and the video parts of Live Photos not), size of all originals from EXIF, items in the bin and jobs running now over all queues.",
+      "description": "Photos and videos (archived and locked ones included, the bin and the video parts of Live Photos not), size of all originals from EXIF, items in the bin and jobs running now over all queues. Immich creates its job metrics on the first job after a restart, so 0 jobs can also mean none ran since then.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -3337,7 +3362,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum({__name__=~\"immich_queues_.+_active\"})",
+          "expr": "sum({__name__=~\"immich_queues_.+_active\"}) or max(immich_users_total) * 0",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -3558,7 +3583,7 @@
     {
       "type": "stat",
       "title": "Authentik",
-      "description": "Authentication flows planned in 24 hours (a stand-in for logins), connected outposts (the embedded one runs the forward auth for the Flux, Longhorn and Traefik UIs) and failed background tasks in 24 hours.",
+      "description": "Authentication flows planned in 24 hours (a stand-in for logins), outposts with at least one connection (the embedded one runs the forward auth for the Flux, Longhorn and Traefik UIs) and failed background tasks in 24 hours.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -3582,7 +3607,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(authentik_outposts_connected)",
+          "expr": "count(max by (outpost) (authentik_outposts_connected) > 0) or count(authentik_outposts_connected) * 0",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -3594,7 +3619,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(authentik_tasks_errors_total[24h]))",
+          "expr": "sum(increase(authentik_tasks_errors_total[24h])) or count(authentik_tasks_total) * 0",
           "editorMode": "code",
           "instant": true,
           "range": false,
