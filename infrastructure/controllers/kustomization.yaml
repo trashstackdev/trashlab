@@ -7,6 +7,7 @@ resources:
   - kube-prometheus-stack/
   - external-secrets/
   - flux-operator/
+  - hcloud-exporter/
   - k8up/
   - longhorn/
   - prometheus-pushgateway/
