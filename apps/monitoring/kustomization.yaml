@@ -17,3 +17,4 @@ resources:
   - servicemonitors.yaml
   - podmonitor.yaml
   - prometheusrules.yaml
+  - b2-usage.yaml

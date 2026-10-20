@@ -6,4 +6,5 @@ resources:
   - externalsecrets.yaml
   - middlewares.yaml
   - helmrelease.yaml
+  - monitoring.yaml
   - backup.yaml

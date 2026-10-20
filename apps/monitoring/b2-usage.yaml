@@ -1,0 +1,123 @@
+---
+# Read-only B2 key for the usage job below, separate from the backup key (apps/<app>/backup.yaml).
+# Keys are rclone environment variable names for a remote called "b2".
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: b2-usage
+  namespace: monitoring
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: bitwarden
+  target:
+    name: b2-usage
+    creationPolicy: Owner
+    template:
+      data:
+        RCLONE_CONFIG_B2_TYPE: b2
+        RCLONE_CONFIG_B2_ACCOUNT: "{{ .keyId }}"
+        RCLONE_CONFIG_B2_KEY: "{{ .key }}"
+  data:
+    - secretKey: keyId
+      remoteRef:
+        key: 8c4e53c5-03cd-4190-9784-b4e90111613d # b2-readonly-key-id
+    - secretKey: key
+      remoteRef:
+        key: 54b2ff10-eb6c-499f-bdcd-b4e901118d8a # b2-readonly-key
+---
+# Size of each restic repository in the offsite backup bucket, for the overview dashboard (no B2 API returns
+# bucket sizes). Pushes b2_repository_bytes and b2_repository_objects per repository to the Pushgateway,
+# which adds push_time_seconds{job="b2_usage"} for the B2UsageStale alert.
+# --b2-versions counts hidden versions too (kept 30 days by the bucket's lifecycle rule), so the bytes are what
+# Backblaze bills. A run lists about 20 pages of 1000 files, well within B2's free daily transactions.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: b2-usage
+  namespace: monitoring
+spec:
+  schedule: "17 * * * *"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: rclone
+              image: rclone/rclone:1.75.2
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  bytes=""
+                  objects=""
+                  for dir in $(rclone lsf --dirs-only "b2:$BUCKET"); do
+                    repo="${dir%/}"
+                    size=$(rclone size --json --b2-versions "b2:$BUCKET/$repo")
+                    b=$(echo "$size" | sed -n 's/.*"bytes":\([0-9]*\).*/\1/p')
+                    c=$(echo "$size" | sed -n 's/.*"count":\([0-9]*\).*/\1/p')
+                    echo "$repo: $b bytes in $c objects"
+                    bytes="${bytes}b2_repository_bytes{repository=\"$repo\"} $b
+                  "
+                    objects="${objects}b2_repository_objects{repository=\"$repo\"} $c
+                  "
+                  done
+                  if [ -z "$bytes" ]; then
+                    echo "No repositories found in $BUCKET" >&2
+                    exit 1
+                  fi
+                  {
+                    echo "# HELP b2_repository_bytes Bytes stored in B2 per restic repository, all versions included"
+                    echo "# TYPE b2_repository_bytes gauge"
+                    printf '%s' "$bytes"
+                    echo "# HELP b2_repository_objects Objects stored in B2 per restic repository, all versions included"
+                    echo "# TYPE b2_repository_objects gauge"
+                    printf '%s' "$objects"
+                  } > /tmp/metrics.prom
+                  wget -q -O /dev/null --header 'Content-Type: text/plain; version=0.0.4' \
+                    --post-file /tmp/metrics.prom "$PUSHGATEWAY/metrics/job/b2_usage"
+              env:
+                - name: BUCKET
+                  value: trashlab-backup-33b2e1
+                - name: PUSHGATEWAY
+                  value: http://prometheus-pushgateway.monitoring.svc:9091
+                # No config file: the remote comes from the RCLONE_CONFIG_B2_* variables
+                - name: RCLONE_CONFIG
+                  value: /tmp/rclone.conf
+                - name: HOME
+                  value: /tmp
+              envFrom:
+                - secretRef:
+                    name: b2-usage
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
