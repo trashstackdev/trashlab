@@ -1,10 +1,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - externalsecret.yaml
-  - servicemonitors.yaml
-  - podmonitor.yaml
-  - prometheusrules.yaml
 # Grafana's sidecar loads ConfigMaps labelled grafana_dashboard: "1" into /tmp/dashboards/<key>. The overview is
 # Grafana's home dashboard (default_home_dashboard_path in kube-prometheus-stack), so the name and key stay fixed.
 # The JSON is generated outside this repo; edits made in the Grafana UI are lost on reload, so change it here.
@@ -17,3 +12,8 @@ configMapGenerator:
       disableNameSuffixHash: true
       labels:
         grafana_dashboard: "1"
+resources:
+  - externalsecret.yaml
+  - servicemonitors.yaml
+  - podmonitor.yaml
+  - prometheusrules.yaml
