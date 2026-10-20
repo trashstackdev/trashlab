@@ -1,5 +1,5 @@
 ---
-# Scrape cert-manager controller metrics (port 9402, named http-metrics since chart v1.21)
+# Scrape cert-manager controller metrics (port 9402; the chart names it http-metrics, the old name tcp-prometheus-servicemonitor matched nothing)
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
