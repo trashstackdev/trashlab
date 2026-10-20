@@ -232,6 +232,11 @@ spec:
       # Search logs from VictoriaLogs (infrastructure/controllers/victoria-logs)
       plugins:
         - victoriametrics-logs-datasource
+      # Grafana updates provisioned data sources by uid, so the switch to the fixed uid below failed with
+      # "data source not found". Deleting by name first lets provisioning recreate it with that uid on every reload.
+      deleteDatasources:
+        - name: VictoriaLogs
+          orgId: 1
       additionalDataSources:
         - name: VictoriaLogs
           # Fixed uid, referenced by the trashlab overview dashboard
