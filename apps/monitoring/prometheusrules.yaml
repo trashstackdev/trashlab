@@ -81,3 +81,35 @@ spec:
           annotations:
             summary: "ExternalSecret {{ $labels.namespace }}/{{ $labels.name }} is not syncing from Bitwarden SM"
             description: "Workloads keep the last synced value. Check the ExternalSecret events and the bitwarden-sdk-server pod in external-secrets."
+    # Metrics behind the trashlab overview dashboard (apps/monitoring/dashboards)
+    - name: overview
+      rules:
+        # hcloud-exporter (infrastructure/controllers/hcloud-exporter); sizes include snapshots
+        - alert: StorageBoxAlmostFull
+          expr: hcloud_storagebox_general_size / hcloud_storagebox_quota > 0.85
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Storage Box {{ $labels.name }} is {{ $value | humanizePercentage }} full"
+            description: "Delete old snapshots or data, or move to a larger box in the Hetzner Console. Longhorn backups and Immich's library fail once it's full."
+        # Dawarich's CNPG custom query (apps/dawarich/monitoring.yaml): the recording time of the newest point
+        - alert: DawarichNoNewPoints
+          expr: time() - cnpg_dawarich_points_newest_seconds > 24 * 3600
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "No new Dawarich location point from {{ $labels.owner }} for {{ $value | humanizeDuration }}"
+            description: "iPhone tracking has probably stopped. Check the Dawarich app's tracking settings and the dawarich pod logs."
+        # b2-usage CronJob (apps/monitoring/b2-usage.yaml) pushes hourly; the Pushgateway sets push_time_seconds.
+        # Fires 3 hours after the last push. The Pushgateway keeps nothing across restarts, so absence only counts
+        # after two hours.
+        - alert: B2UsageStale
+          expr: time() - max(push_time_seconds{job="b2_usage"}) > 3600 or absent(push_time_seconds{job="b2_usage"})
+          for: 2h
+          labels:
+            severity: warning
+          annotations:
+            summary: "The b2-usage job has stopped pushing B2 sizes"
+            description: "Check the b2-usage job pods in monitoring (kubectl -n monitoring get jobs) and the b2-usage ExternalSecret."
