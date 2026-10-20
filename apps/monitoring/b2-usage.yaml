@@ -22,10 +22,10 @@ spec:
   data:
     - secretKey: keyId
       remoteRef:
-        key: PLACEHOLDER-b2-readonly-key-id # b2-readonly-key-id
+        key: 8c4e53c5-03cd-4190-9784-b4e90111613d # b2-readonly-key-id
     - secretKey: key
       remoteRef:
-        key: PLACEHOLDER-b2-readonly-key # b2-readonly-key
+        key: 54b2ff10-eb6c-499f-bdcd-b4e901118d8a # b2-readonly-key
 ---
 # Size of each restic repository in the offsite backup bucket, for the overview dashboard (no B2 API returns
 # bucket sizes). Pushes b2_repository_bytes and b2_repository_objects per repository to the Pushgateway,
