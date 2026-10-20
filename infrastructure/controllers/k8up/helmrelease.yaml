@@ -39,8 +39,12 @@ spec:
     k8up:
       # Cron expressions in Schedules use this time zone
       timezone: Europe/Berlin
-    # Alerts live in apps/monitoring/prometheusrules.yaml: the chart's default rules need a Pushgateway
-    # and their "not running" rule can't fire (it sums away the namespace label)
+      envVars:
+        # Backup and check pods push their restic stats here when they finish (see prometheus-pushgateway/)
+        - name: BACKUP_PROMURL
+          value: http://prometheus-pushgateway.monitoring.svc:9091
+    # Alerts live in apps/monitoring/prometheusrules.yaml: the chart's "not running" rule can't fire
+    # (it sums away the namespace label) and its failure rules need extra kube-state-metrics labels
     metrics:
       serviceMonitor:
         enabled: true

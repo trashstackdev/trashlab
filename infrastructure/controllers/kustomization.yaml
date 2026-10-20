@@ -9,6 +9,7 @@ resources:
   - flux-operator/
   - k8up/
   - longhorn/
+  - prometheus-pushgateway/
   - reloader/
   - traefik/
   - victoria-logs/
