@@ -39,6 +39,11 @@ spec:
     k8up:
       # Cron expressions in Schedules use this time zone
       timezone: Europe/Berlin
+      envVars:
+        # There is no Pushgateway: with the default http://127.0.0.1/, every backup and check pod
+        # logs "prometheus send failed" with a stack trace. An empty URL skips the push.
+        - name: BACKUP_PROMURL
+          value: ""
     # Alerts live in apps/monitoring/prometheusrules.yaml: the chart's default rules need a Pushgateway
     # and their "not running" rule can't fire (it sums away the namespace label)
     metrics:
