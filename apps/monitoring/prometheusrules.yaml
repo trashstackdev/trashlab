@@ -58,6 +58,17 @@ spec:
           annotations:
             summary: "The offsite backup of {{ $labels.namespace }} has never completed successfully"
             description: "The k8up Schedule exists but no backup job has succeeded. Check its job pods and the offsite-backup Secret in {{ $labels.namespace }}."
+        # k8up counts a backup as successful even when restic couldn't read some files (exit code 3), so watch
+        # restic's own error count, pushed through the Pushgateway. Skips the raw Bitnami Postgres and Redis
+        # volumes: files vanish there while the database runs, and their SQL dumps are the real backup.
+        - alert: K8upResticErrors
+          expr: k8up_backup_restic_last_errors{pvc!~"data-.+-postgresql-0|redis-data-.+"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Offsite backup of {{ $labels.namespace }}/{{ $labels.pvc }} had {{ $value }} restic errors"
+            description: "k8up still reports the backup as successful, but some files are missing from it. Check the newest backup pod logs in {{ $labels.namespace }} for files restic could not read."
     - name: secrets
       rules:
         - alert: ExternalSecretNotSynced

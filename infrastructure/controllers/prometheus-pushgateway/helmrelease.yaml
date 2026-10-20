@@ -1,0 +1,39 @@
+---
+# Receives the restic stats that each k8up backup pod pushes when it finishes (k8up_backup_restic_*).
+# The pods live only minutes, too short for Prometheus to scrape them, so they push here and Prometheus
+# scrapes this. The alert on k8up_backup_restic_last_errors in apps/monitoring/prometheusrules.yaml needs it:
+# k8up reports a backup as successful even when restic couldn't read some files.
+# No persistence: after a restart the values come back with the next nightly push.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prometheus-pushgateway
+  namespace: monitoring
+spec:
+  interval: 1h
+  releaseName: prometheus-pushgateway
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: prometheus-pushgateway
+      version: 3.9.1
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+  values:
+    # Keeps the job, instance, namespace and pvc labels the pushers set (honorLabels is on by default)
+    serviceMonitor:
+      enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
