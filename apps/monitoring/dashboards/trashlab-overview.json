@@ -3350,7 +3350,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(cnpg_immich_assets_count{status=\"trashed\"})",
+          "expr": "sum(cnpg_immich_assets_count{status=\"trashed\"}) or sum(cnpg_immich_assets_count) * 0",
           "editorMode": "code",
           "instant": true,
           "range": false,
