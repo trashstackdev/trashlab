@@ -71,6 +71,11 @@ spec:
     kubeEtcd:
       enabled: false
 
+    # Expose k8up's job type as label_k8up_io_type on kube_job_labels, for the offsite backup alerts
+    kube-state-metrics:
+      metricLabelsAllowlist:
+        - jobs=[k8up.io/type]
+
     # -------------------------------------------------------------------------
     # Prometheus
     # -------------------------------------------------------------------------

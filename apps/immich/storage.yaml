@@ -50,6 +50,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: immich-thumbs
   namespace: immich
+  annotations:
+    # Disposable, so no offsite backup either (apps/immich/backup.yaml)
+    k8up.io/backup: "false"
   labels:
     recurring-job.longhorn.io/source: enabled
     recurring-job-group.longhorn.io/no-backup: enabled
@@ -67,6 +70,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: immich-ml-cache
   namespace: immich
+  annotations:
+    # Disposable, so no offsite backup either (apps/immich/backup.yaml)
+    k8up.io/backup: "false"
   labels:
     recurring-job.longhorn.io/source: enabled
     recurring-job-group.longhorn.io/no-backup: enabled

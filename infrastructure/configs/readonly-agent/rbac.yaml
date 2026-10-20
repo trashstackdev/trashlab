@@ -67,7 +67,7 @@ rules:
     resources: [priorityclasses]
     verbs: [get, list, watch]
   # Operator CRDs; none of them hold secret values (they reference Secrets by name)
-  - apiGroups: [longhorn.io, postgresql.cnpg.io, traefik.io, monitoring.coreos.com, gateway.networking.k8s.io]
+  - apiGroups: [longhorn.io, postgresql.cnpg.io, traefik.io, monitoring.coreos.com, gateway.networking.k8s.io, k8up.io]
     resources: ["*"]
     verbs: [get, list, watch]
 ---

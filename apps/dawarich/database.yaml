@@ -28,3 +28,12 @@ spec:
         passwordSecret:
           name: dawarich-db
   enableSuperuserAccess: false
+  # Offsite backup (backup.yaml): k8up stores a pg_dump from the instance pod instead of the live data volume.
+  # CNPG copies these annotations to the instance pods and PVCs; k8up reads k8up.io/backup only on PVCs
+  # and the dump command only on pods.
+  inheritedMetadata:
+    annotations:
+      k8up.io/backup: "false"
+      k8up.io/backupcommand: sh -c 'pg_dump -d dawarich --clean --if-exists'
+      k8up.io/backupcommand-container: postgres
+      k8up.io/file-extension: .sql
