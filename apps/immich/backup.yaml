@@ -26,13 +26,13 @@ spec:
   data:
     - secretKey: password
       remoteRef:
-        key: PLACEHOLDER # restic-backup-password
+        key: 9bb0b256-d8a7-4281-9c9f-b4e900ae9ecb # restic-backup-password
     - secretKey: keyId
       remoteRef:
-        key: PLACEHOLDER # b2-backup-key-id
+        key: 534d24b0-881a-4a92-8baa-b4e900ae3eeb # b2-backup-key-id
     - secretKey: key
       remoteRef:
-        key: PLACEHOLDER # b2-backup-key
+        key: 24948841-4e4a-438f-ad74-b4e900ae5ebb # b2-backup-key
 ---
 # Daily offsite backup of every PVC in this namespace that isn't annotated k8up.io/backup: "false".
 # Immich writes its own database dump (daily at 02:00 into the library's backups/ folder).
