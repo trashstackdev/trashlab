@@ -1,5 +1,5 @@
 ---
-# Scrape cert-manager controller metrics (port 9402 is exposed by default)
+# Scrape cert-manager controller metrics (port 9402; the chart names it http-metrics, the old name tcp-prometheus-servicemonitor matched nothing)
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -14,7 +14,7 @@ spec:
       app.kubernetes.io/name: cert-manager
       app.kubernetes.io/component: controller
   endpoints:
-    - port: tcp-prometheus-servicemonitor
+    - port: http-metrics
       path: /metrics
 ---
 # Scrape Longhorn manager metrics (port 9500, exposed by default)

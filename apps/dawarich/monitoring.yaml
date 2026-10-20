@@ -1,0 +1,63 @@
+---
+# Scrape the CNPG instance (port metrics, 9187). Written by hand because spec.monitoring.enablePodMonitor is deprecated.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: dawarich-db
+  namespace: dawarich
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: dawarich-db
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics
+---
+# Location history stats for the overview dashboard and the DawarichNoNewPoints alert, added to CNPG's
+# default metrics (database.yaml). Each column becomes cnpg_<query>_<column>.
+# Columns checked against Dawarich 1.16.0 (db/schema.rb); recheck them on Dawarich upgrades.
+# points.timestamp is the time a point was recorded, in Unix seconds (integer). The per-user subqueries
+# use the (user_id, timestamp) index; the total comes from table stats to avoid counting every row each scrape.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dawarich-db-monitoring
+  namespace: dawarich
+  labels:
+    # The instance manager reloads the queries when this ConfigMap changes
+    cnpg.io/reload: ""
+data:
+  queries: |
+    dawarich_points:
+      query: |
+        SELECT u.email::text AS owner
+          , COALESCE((SELECT max(p."timestamp") FROM points p WHERE p.user_id = u.id), 0)::bigint AS newest_seconds
+          , (SELECT count(*) FROM points p
+              WHERE p.user_id = u.id
+                AND p."timestamp" >= extract(epoch FROM now() - interval '24 hours')::integer) AS last_24h
+        FROM users u
+        WHERE u.deleted_at IS NULL
+          AND EXISTS (SELECT 1 FROM points p WHERE p.user_id = u.id)
+      target_databases:
+        - dawarich
+      metrics:
+        - owner:
+            usage: LABEL
+            description: Email of the Dawarich user
+        - newest_seconds:
+            usage: GAUGE
+            description: Recording time of the newest point, in Unix seconds
+        - last_24h:
+            usage: GAUGE
+            description: Points recorded in the last 24 hours
+    dawarich_points_table:
+      query: |
+        SELECT n_live_tup AS rows
+        FROM pg_stat_user_tables
+        WHERE relname = 'points'
+      target_databases:
+        - dawarich
+      metrics:
+        - rows:
+            usage: GAUGE
+            description: Points of all users (live row estimate from the table stats)

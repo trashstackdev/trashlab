@@ -43,6 +43,21 @@ spec:
         secretKeys:
           adminPasswordKey: postgres-password
           userPasswordKey: password
+          metricsPasswordKey: password
+        # The chart runs the official postgres image, where POSTGRES_USER (authentik) is the superuser:
+        # the exporter's default user "postgres" may not exist
+        metricsUsername: authentik
+      # postgres-exporter sidecar (pg_database_size_bytes, connections). Changes only the pod template.
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
       primary:
         # Offsite backup (backup.yaml): k8up stores this dump. The data PVC can't carry k8up.io/backup: "false"
         # (StatefulSet volumeClaimTemplates are immutable), so its live files are copied too: restore from the dump.
@@ -64,6 +79,11 @@ spec:
 
     # ~480 MiB typical (Oct 2026)
     worker:
+      # Task errors (port 9300, already open in the pod)
+      metrics: &metrics
+        enabled: true
+        serviceMonitor:
+          enabled: true
       resources:
         requests:
           cpu: 50m
@@ -72,6 +92,8 @@ spec:
           memory: 1Gi
 
     server:
+      # Flow executions (a stand-in for logins) and connected outposts
+      metrics: *metrics
       # ~750 MiB typical, 900 MiB peak (Oct 2026)
       resources:
         requests:
