@@ -60,6 +60,21 @@ spec:
               userPasswordKey: password
       image:
         tag: 16.3.0-debian-12-r10
+      # postgres-exporter sidecar (pg_database_size_bytes, connections), connecting as the nextcloud user.
+      # Changes only the pod template. Upstream image instead of Bitnami's, which no longer gets updates.
+      metrics:
+        enabled: true
+        image:
+          repository: prometheuscommunity/postgres-exporter
+          tag: v0.19.1
+        serviceMonitor:
+          enabled: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
       primary:
         # Offsite backup (backup.yaml): k8up stores this dump. The data PVC can't carry k8up.io/backup: "false"
         # (StatefulSet volumeClaimTemplates are immutable), so its live files are copied too: restore from the dump.

@@ -1,0 +1,61 @@
+---
+# Scrape the CNPG instance (port metrics, 9187). Written by hand because spec.monitoring.enablePodMonitor is deprecated.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: immich-db
+  namespace: immich
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: immich-db
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics
+---
+# Library counts for the overview dashboard, added to CNPG's default metrics (database.yaml).
+# Immich's own telemetry has no asset counts. Each column becomes cnpg_<query>_<column>.
+# Columns checked against Immich v3.3.3 (server/src/schema/tables); recheck them on Immich upgrades.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: immich-db-monitoring
+  namespace: immich
+  labels:
+    # The instance manager reloads the queries when this ConfigMap changes
+    cnpg.io/reload: ""
+data:
+  queries: |
+    immich_assets:
+      query: |
+        SELECT u.name::text AS owner
+          , a.type::text AS type
+          , a.status::text AS status
+          , a.visibility::text AS visibility
+          , count(*) AS count
+          , COALESCE(sum(e."fileSizeInByte"), 0)::bigint AS bytes
+        FROM asset a
+        JOIN "user" u ON u.id = a."ownerId"
+        LEFT JOIN asset_exif e ON e."assetId" = a.id
+        GROUP BY 1, 2, 3, 4
+      target_databases:
+        - immich
+      metrics:
+        - owner:
+            usage: LABEL
+            description: Display name of the owner
+        - type:
+            usage: LABEL
+            description: IMAGE or VIDEO
+        - status:
+            usage: LABEL
+            description: active, trashed (in the bin) or deleted (being removed)
+        - visibility:
+            usage: LABEL
+            description: timeline, archive, locked or hidden (the video part of Live Photos)
+        - count:
+            usage: GAUGE
+            description: Number of assets
+        - bytes:
+            usage: GAUGE
+            description: Size of the originals in bytes, from EXIF
