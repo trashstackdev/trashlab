@@ -1,0 +1,46 @@
+---
+# k8up backs up PVCs with restic to Backblaze B2: the offsite copy, at another company than Hetzner.
+# Longhorn's daily backups to the Storage Box stay as the fast local copy.
+#
+# - Each backed-up namespace has a Schedule and an offsite-backup Secret in apps/<app>/backup.yaml,
+#   with its own restic repository under trashlab-backup-33b2e1/<namespace>.
+# - Every PVC in such a namespace is included unless it is annotated k8up.io/backup: "false".
+#   Databases are saved as pg_dump output through k8up.io/backupcommand pod annotations, and their
+#   data volumes are excluded where the PVC can be annotated. Immich writes its own dump into its library.
+# - The B2 application key has no deleteFiles capability: restic's deletes only hide files, and the bucket's
+#   lifecycle rule removes hidden versions after 30 days. Whoever holds the key can't destroy older backups.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: k8up
+  namespace: k8up
+spec:
+  interval: 1h
+  releaseName: k8up
+  install:
+    # The chart ships the CRDs in crds/, which Helm only creates: CreateReplace keeps them current
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: k8up
+      version: 4.10.0
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: k8up
+        namespace: flux-system
+  values:
+    k8up:
+      # Cron expressions in Schedules use this time zone
+      timezone: Europe/Berlin
+    # Alerts live in apps/monitoring/prometheusrules.yaml: the chart's default rules need a Pushgateway
+    # and their "not running" rule can't fire (it sums away the namespace label)
+    metrics:
+      serviceMonitor:
+        enabled: true

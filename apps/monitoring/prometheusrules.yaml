@@ -32,6 +32,32 @@ spec:
           annotations:
             summary: "Longhorn backup-daily has never completed successfully"
             description: "The CronJob exists but has no successful run. Check its job pods in longhorn-system."
+        # k8up offsite backups to B2 (infrastructure/controllers/k8up). The operator's own counters reset when it
+        # restarts, so staleness comes from kube-state-metrics jobs with the k8up.io/type label.
+        - alert: K8upJobFailed
+          expr: k8up_schedule_last_job_succeeded == 0
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "k8up {{ $labels.jobType }} of {{ $labels.namespace }} to B2 failed"
+            description: "Check the {{ $labels.jobType }} job pods in {{ $labels.namespace }} (kubectl -n {{ $labels.namespace }} get backups,checks,prunes)."
+        - alert: K8upBackupStale
+          expr: time() - max by (namespace) (kube_job_status_completion_time * on(namespace, job_name) group_left() kube_job_labels{label_k8up_io_type="backup"}) > 26 * 3600
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "No successful offsite backup of {{ $labels.namespace }} for {{ $value | humanizeDuration }}"
+            description: "Check the k8up Schedule and the backup job pods in {{ $labels.namespace }}."
+        - alert: K8upBackupNeverSucceeded
+          expr: max by (namespace) (k8up_schedules_gauge) > 0 unless on(namespace) (kube_job_status_completion_time * on(namespace, job_name) group_left() kube_job_labels{label_k8up_io_type="backup"})
+          for: 26h
+          labels:
+            severity: critical
+          annotations:
+            summary: "The offsite backup of {{ $labels.namespace }} has never completed successfully"
+            description: "The k8up Schedule exists but no backup job has succeeded. Check its job pods and the offsite-backup Secret in {{ $labels.namespace }}."
     - name: secrets
       rules:
         - alert: ExternalSecretNotSynced

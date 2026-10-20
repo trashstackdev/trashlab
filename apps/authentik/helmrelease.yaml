@@ -44,6 +44,12 @@ spec:
           adminPasswordKey: postgres-password
           userPasswordKey: password
       primary:
+        # Offsite backup (backup.yaml): k8up stores this dump. The data PVC can't carry k8up.io/backup: "false"
+        # (StatefulSet volumeClaimTemplates are immutable), so its live files are copied too: restore from the dump.
+        podAnnotations:
+          k8up.io/backupcommand: sh -c 'PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")" pg_dump -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DATABASE" --clean --if-exists'
+          k8up.io/backupcommand-container: postgresql
+          k8up.io/file-extension: .sql
         persistence:
           enabled: true
           storageClass: longhorn

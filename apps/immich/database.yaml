@@ -32,3 +32,8 @@ spec:
         passwordSecret:
           name: immich-db
   enableSuperuserAccess: false
+  # Offsite backup (backup.yaml): skip the live data volume. The dump Immich writes into its library is backed up instead.
+  # CNPG copies these annotations to the instance pods and PVCs; k8up reads k8up.io/backup only on PVCs.
+  inheritedMetadata:
+    annotations:
+      k8up.io/backup: "false"

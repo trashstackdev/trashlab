@@ -5,3 +5,4 @@ resources:
   - helmrepository.yaml
   - externalsecrets.yaml
   - helmrelease.yaml
+  - backup.yaml

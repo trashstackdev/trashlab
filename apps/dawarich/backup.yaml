@@ -1,0 +1,81 @@
+---
+# Credentials for the offsite backup (see infrastructure/controllers/k8up/helmrelease.yaml).
+# The keys are restic environment variable names, because the Schedule also loads this Secret with envFrom.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: offsite-backup
+  namespace: dawarich
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: bitwarden
+  target:
+    name: offsite-backup
+    creationPolicy: Owner
+    template:
+      data:
+        RESTIC_PASSWORD: "{{ .password }}"
+        AWS_ACCESS_KEY_ID: "{{ .keyId }}"
+        AWS_SECRET_ACCESS_KEY: "{{ .key }}"
+        # The bucket's region, matching the endpoint in the Schedule
+        AWS_DEFAULT_REGION: eu-central-003
+  data:
+    - secretKey: password
+      remoteRef:
+        key: 9bb0b256-d8a7-4281-9c9f-b4e900ae9ecb # restic-backup-password
+    - secretKey: keyId
+      remoteRef:
+        key: 534d24b0-881a-4a92-8baa-b4e900ae3eeb # b2-backup-key-id
+    - secretKey: key
+      remoteRef:
+        key: 24948841-4e4a-438f-ad74-b4e900ae5ebb # b2-backup-key
+---
+# Daily offsite backup of every PVC in this namespace that isn't annotated k8up.io/backup: "false".
+# The database is saved as a pg_dump through the inheritedMetadata annotations in database.yaml.
+apiVersion: k8up.io/v1
+kind: Schedule
+metadata:
+  name: offsite
+  namespace: dawarich
+spec:
+  backend:
+    repoPasswordSecretRef:
+      name: offsite-backup
+      key: RESTIC_PASSWORD
+    s3:
+      endpoint: https://s3.eu-central-003.backblazeb2.com
+      # One restic repository per namespace
+      bucket: trashlab-backup-33b2e1/dawarich
+      accessKeyIDSecretRef:
+        name: offsite-backup
+        key: AWS_ACCESS_KEY_ID
+      secretAccessKeySecretRef:
+        name: offsite-backup
+        key: AWS_SECRET_ACCESS_KEY
+    envFrom:
+      - secretRef:
+          name: offsite-backup
+  # restic must read files owned by any app user. k8up counts unreadable files (restic exit code 3)
+  # as a successful backup, so a non-root user would silently leave files out.
+  podSecurityContext:
+    runAsUser: 0
+  resourceRequirementsTemplate:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 2Gi
+  # Europe/Berlin (k8up.timezone): after Immich's 02:00 database dump and the 03:00 Longhorn backup,
+  # staggered per namespace
+  backup:
+    schedule: "10 4 * * *"
+  prune:
+    schedule: "0 5 * * 0"
+    retention:
+      keepDaily: 7
+      keepWeekly: 4
+      keepMonthly: 12
+  check:
+    schedule: "0 6 * * 0"
