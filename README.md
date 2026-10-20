@@ -27,6 +27,10 @@ My GitOps configuration for a single-node k3s cluster on a Hetzner EX44, managed
 | External Secrets | Secrets from Bitwarden SM |
 | Reloader | Restarts opted-in workloads when a Secret they read at startup changes |
 | Authentik | SSO / ForwardAuth |
+| kube-prometheus-stack | Metrics, alerts to Discord and Grafana, with the trashlab overview as home dashboard |
+| VictoriaLogs and Vector | Pod logs and the host journal |
+| k8up | Offsite backups to Backblaze B2 |
+| Exporters | Storage Boxes (hcloud-exporter), Nextcloud, Postgres and B2 usage for the overview |
 
 ## Structure
 

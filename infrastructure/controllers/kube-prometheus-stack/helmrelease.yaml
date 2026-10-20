@@ -212,6 +212,9 @@ spec:
       grafana.ini:
         server:
           root_url: https://grafana.trashstack.dev
+        # The trashlab overview (apps/monitoring/dashboards), written there by the dashboard sidecar
+        dashboards:
+          default_home_dashboard_path: /tmp/dashboards/trashlab-overview.json
         auth.generic_oauth:
           enabled: true
           name: Authentik
