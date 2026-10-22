@@ -34,9 +34,11 @@ spec:
             description: "The CronJob exists but has no successful run. Check its job pods in longhorn-system."
         # k8up offsite backups to B2 (infrastructure/controllers/k8up). The operator's own counters reset when it
         # restarts, so staleness comes from kube-state-metrics jobs with the k8up.io/type label.
+        # The operator's metrics carry the scrape target's namespace (k8up) in namespace and the Schedule's
+        # namespace in exported_namespace, so the rules copy exported_namespace into namespace.
+        # K8upJobFailed stays active for 24h after a failed job, then resolves on its own.
         - alert: K8upJobFailed
-          expr: k8up_schedule_last_job_succeeded == 0
-          for: 15m
+          expr: sum by (namespace, jobType) (label_replace(increase(k8up_jobs_failed_counter[24h]), "namespace", "$1", "exported_namespace", "(.+)")) > 0
           labels:
             severity: critical
           annotations:
@@ -51,7 +53,7 @@ spec:
             summary: "No successful offsite backup of {{ $labels.namespace }} for {{ $value | humanizeDuration }}"
             description: "Check the k8up Schedule and the backup job pods in {{ $labels.namespace }}."
         - alert: K8upBackupNeverSucceeded
-          expr: max by (namespace) (k8up_schedules_gauge) > 0 unless on(namespace) (kube_job_status_completion_time * on(namespace, job_name) group_left() kube_job_labels{label_k8up_io_type="backup"})
+          expr: max by (namespace) (label_replace(k8up_schedules_gauge, "namespace", "$1", "exported_namespace", "(.+)")) > 0 unless on(namespace) (kube_job_status_completion_time * on(namespace, job_name) group_left() kube_job_labels{label_k8up_io_type="backup"})
           for: 26h
           labels:
             severity: critical
