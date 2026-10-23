@@ -1,5 +1,6 @@
 authentik_url                = "https://auth.trashstack.dev"
 authentik_token              = "<authentik-api-token>"
+admin_usernames              = ["<your-authentik-username>"]
 nextcloud_oidc_client_id     = "<nextcloud-oidc-client-id>"
 nextcloud_oidc_client_secret = "<nextcloud-oidc-client-secret>"
 sure_oidc_client_id          = "<sure-oidc-client-id>"
