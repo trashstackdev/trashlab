@@ -11,12 +11,26 @@ resource "authentik_brand" "default" {
 }
 
 # Groups
+# Membership is managed here, so a user added by hand in the UI is removed on the next apply.
+# Usernames come from tfvars to keep the admin accounts out of this public repo.
+data "authentik_user" "admins" {
+  for_each = toset(var.admin_usernames)
+  username = each.value
+}
+
 resource "authentik_group" "admins" {
   name         = "authentik Admins"
   is_superuser = true
+  users        = [for u in data.authentik_user.admins : u.pk]
+}
+
+# Guests who use Immich and nothing else. Members are added by hand in the UI, not here.
+resource "authentik_group" "immich_users" {
+  name = "immich-users"
 }
 
 # Applications
+# Every application needs an entry in local.admin_apps below: without a binding, any Authentik user can open it.
 resource "authentik_application" "flux_ui" {
   name              = "Flux UI"
   slug              = "flux-ui"
@@ -93,4 +107,33 @@ resource "authentik_outpost" "embedded" {
     kubernetes_replicas  = 1
     log_level            = "info"
   })
+}
+
+# Access bindings
+# Group bindings need no policy object. An application with at least one binding admits only matching users.
+locals {
+  admin_apps = {
+    flux_ui           = authentik_application.flux_ui.uuid
+    longhorn_ui       = authentik_application.longhorn_ui.uuid
+    traefik_dashboard = authentik_application.traefik_dashboard.uuid
+    grafana           = authentik_application.grafana.uuid
+    sure              = authentik_application.sure.uuid
+    nextcloud         = authentik_application.nextcloud.uuid
+    immich            = authentik_application.immich.uuid
+    dawarich          = authentik_application.dawarich.uuid
+    forgejo           = authentik_application.forgejo.uuid
+  }
+}
+
+resource "authentik_policy_binding" "admins" {
+  for_each = local.admin_apps
+  target   = each.value
+  group    = authentik_group.admins.id
+  order    = 0
+}
+
+resource "authentik_policy_binding" "immich_users" {
+  target = authentik_application.immich.uuid
+  group  = authentik_group.immich_users.id
+  order  = 10
 }

@@ -23,6 +23,16 @@ variable "authentik_token" {
   sensitive = true
 }
 
+# Usernames that belong to the superuser group "authentik Admins"
+variable "admin_usernames" {
+  type = list(string)
+
+  validation {
+    condition     = length(var.admin_usernames) > 0
+    error_message = "List at least one admin, or the apply locks everyone out."
+  }
+}
+
 variable "nextcloud_oidc_client_secret" {
   type      = string
   sensitive = true
