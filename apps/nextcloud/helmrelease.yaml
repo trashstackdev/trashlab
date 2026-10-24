@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: nextcloud
-      version: 9.2.6
+      version: 9.4.1
       sourceRef:
         kind: HelmRepository
         name: nextcloud
@@ -66,7 +66,7 @@ spec:
         enabled: true
         image:
           repository: prometheuscommunity/postgres-exporter
-          tag: v0.19.1
+          tag: v0.20.1
         serviceMonitor:
           enabled: true
         resources:
