@@ -23,7 +23,7 @@ spec:
           main:
             image:
               # The chart does not follow Immich releases: bump this tag (Renovate does) and read the release notes first
-              tag: v3.3.3
+              tag: v3.3.5
             env:
               TZ: Europe/Berlin
 
