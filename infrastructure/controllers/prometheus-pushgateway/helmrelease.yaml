@@ -21,7 +21,7 @@ spec:
   chart:
     spec:
       chart: prometheus-pushgateway
-      version: 3.9.1
+      version: 3.10.1
       reconcileStrategy: ChartVersion
       sourceRef:
         kind: HelmRepository
