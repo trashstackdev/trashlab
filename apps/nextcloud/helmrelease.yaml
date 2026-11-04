@@ -69,6 +69,10 @@ spec:
           tag: v0.19.1
         serviceMonitor:
           enabled: true
+        # The exporter connects as the unprivileged nextcloud user, which can't call pg_ls_waldir (the wal collector
+        # then logs an error every scrape)
+        collectors:
+          wal: false
         resources:
           requests:
             cpu: 10m
