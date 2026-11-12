@@ -5,6 +5,8 @@ resources:
   - helmrepository.yaml
   - externalsecrets.yaml
   - middlewares.yaml
+  - archive-volume.yaml
+  - archive-claim.yaml
   - helmrelease.yaml
   - monitoring.yaml
   - backup.yaml

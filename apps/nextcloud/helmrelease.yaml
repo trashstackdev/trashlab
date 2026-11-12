@@ -45,6 +45,17 @@ spec:
           value: "1"
       phpConfigs:
         opcache.interned_strings_buffer: "10"
+      # Archive on the Storage Box (archive-volume.yaml). Registered once in Nextcloud as external storage for one user:
+      #   occ app:enable files_external
+      #   occ files_external:create Archive local null::null -c datadir=/mnt/archive
+      #   occ files_external:applicable --add-user <user id> <mount id>
+      extraVolumes:
+        - name: archive
+          persistentVolumeClaim:
+            claimName: nextcloud-archive
+      extraVolumeMounts:
+        - name: archive
+          mountPath: /mnt/archive
 
     internalDatabase:
       enabled: false

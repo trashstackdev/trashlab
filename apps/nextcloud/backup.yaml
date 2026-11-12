@@ -21,6 +21,8 @@ spec:
         AWS_SECRET_ACCESS_KEY: "{{ .key }}"
         # The bucket's region, matching the endpoint in the Schedule
         AWS_DEFAULT_REGION: eu-central-003
+        # Old videos and old device backups in the archive: the Storage Box is their one offsite copy
+        RESTIC_EXCLUDE: /data/nextcloud-archive/Videos,/data/nextcloud-archive/Backups
   data:
     - secretKey: password
       remoteRef:
