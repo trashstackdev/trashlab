@@ -29,7 +29,7 @@ spec:
         # Must be unique per volume in the cluster
         volumeHandle: nextcloud-archive
         volumeAttributes:
-            source: ENC[AES256_GCM,data:uZWLvah60aRjIch4UUXmHVsi7dLBDDcd9y9r7izK1V9GYqxA4qXpWDypCY4=,iv:eBefYjtIPQOSZ6U0R0nqBSCK0no3Ox7VOmzzryUEECk=,tag:T5iD26BDnhZcuLIxDx8S5Q==,type:str]
+            source: ENC[AES256_GCM,data:kjicOjjLRR0MCrFL5YZieSmdJ9Fo0F5D7ocIhHnF+GrAmaE4cXS+uzm4KWy4tg==,iv:omjH4BNdFyFnn8CFwVBX/zQ2lU5NhgnCjQvakcv62fg=,tag:64ZPPK5T6EMQkO/jNTQ/gg==,type:str]
         nodeStageSecretRef:
             name: nextcloud-archive-smb
             namespace: nextcloud
@@ -37,14 +37,14 @@ sops:
     age:
         - enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBFTTlDQ0FUK0xTVXlrVVI5
-            d0hCZm9CRXQvMVJ5aEprR0lOV3dMajlDMUFvCng3VnNTeFBmQnNyNThxOEYzRzM2
-            RjYrd3ptemlzRjlhT2s2Q3o3amZDcDgKLS0tIHY1QjVlMkdrUkpFOW9pZmJYUS91
-            YUdTNzF4bWtPSjdsS0RlR1NDUHlWa3MKX8h14LNJAMFfInteRDvJOXtdqUAfrncO
-            icflN3vxOiHnqjQmRmZY7OLViEcPQX/dCQspw5glODhf6yzQdUHQzA==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSArSW1GeElWYXdGT2NGb1Iw
+            cXFheWNHaWU3dTIxOUVKcTd0UFBmb2lSZHhZCjd6M2RTK2ZzUjdEUnhLNlhVb0lV
+            SGYxbnRRczdhNys2V0lzWnp2bGxkbG8KLS0tIFJLMVMvanJ2MnFGcUd1cnVTcFQ5
+            Q0lzTTQ2a0lJOEFoV2pRcW1QdjFQdm8KtG7hwpM6JJtdJccswyuixosyTXspKlob
+            HBdfBe4Oi2Wq7xzO3V1e8zUJjpTsyYrT1prKoQLCBhWaslmYEW4ckQ==
             -----END AGE ENCRYPTED FILE-----
           recipient: age1guwhf7ux6kphahck7gpulsjcwc58w8uv8y4s2wpsh7cpjhae6yzqa8l2dh
     encrypted_regex: ^source$
-    lastmodified: "2026-11-12T17:14:52Z"
-    mac: ENC[AES256_GCM,data:p0AdYqPO4GN+YT+mXTDm/ocds5DrNepyxnqemi88UDhW9p+R8VU45cb+PKPlgyCcDL1rwITGjbEynBm5LBFJhHrwlruuVUbfZ0PfWGWW7qc3Wa52nKuiEXLXr4/+2HeVpGU8eO0/yXgzSDcDSOSVZSRM2xCpA0L5UG8Eg/pdMH8=,iv:Sv1w+wWQ6kZ0lkB81JH2ZBgTdS4V8ORaRVWPjLe3pNc=,tag:dHBcuMZhY0fhmTRJ0zaIBA==,type:str]
+    lastmodified: "2026-11-12T17:37:41Z"
+    mac: ENC[AES256_GCM,data:cqK5T+7nlH3UytcLkRVk3fIUw3U0wxOmqVtd1Y0iLbl8OcztcM3eAjcT9DCJXYiruRqqPcDubfMfY9p/079mE96ONDVFiTzxI5Svk/4Kq4Uzf8KDgN7HulMPJmo8N0eaht2w1X5tFBJDlYAzYs22Q4riQKpvFxdtedk0PmTdD10=,iv:142hInqZc1ci5QOgi0F+kYC1BTwl6xSKINFxDttwcgM=,tag:wf5/VXHTKNr7m/ftUVWt7A==,type:str]
     version: 3.13.3
