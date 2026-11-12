@@ -54,6 +54,12 @@ spec:
           DISABLE_REGISTRATION: true
           REQUIRE_SIGNIN_VIEW: true
           DEFAULT_KEEP_EMAIL_PRIVATE: true
+          # Authentik is the only way in. No local password form, and no password logins over
+          # HTTP basic auth, which would otherwise still reach the API (its token endpoints included).
+          # Access tokens keep working for git over HTTPS and for the API.
+          # Break glass when Authentik is down: revert these two lines, Flux needs no Forgejo login.
+          ENABLE_INTERNAL_SIGNIN: false
+          ENABLE_BASIC_AUTHENTICATION: false
         # First Authentik login links to the existing admin account (asks for its password once)
         oauth2_client:
           ENABLE_AUTO_REGISTRATION: false
