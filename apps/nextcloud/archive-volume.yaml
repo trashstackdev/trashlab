@@ -1,0 +1,50 @@
+# Archive for finished files (old documents, videos and backups) on a Hetzner Storage Box sub-account.
+# Kept off the local NVMe on purpose. Shown in Nextcloud as the external storage folder "Archive" (helmrelease.yaml).
+# The share address is SOPS-encrypted because this repo is public. Edit with: sops apps/nextcloud/archive-volume.yaml
+# A PV's source can't change after creation: point to a new sub-account by creating a new PV/PVC pair.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+    name: nextcloud-archive
+spec:
+    capacity:
+        storage: 1Ti
+    accessModes:
+        - ReadWriteMany
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: ""
+    mountOptions:
+        - vers=3.1.1
+        # Encrypt SMB traffic between ex44 and the Storage Box
+        - seal
+        # www-data, the user Nextcloud's PHP runs as
+        - uid=33
+        - gid=33
+        - dir_mode=0770
+        - file_mode=0660
+        - nobrl
+        - noserverino
+    csi:
+        driver: smb.csi.k8s.io
+        # Must be unique per volume in the cluster
+        volumeHandle: nextcloud-archive
+        volumeAttributes:
+            source: ENC[AES256_GCM,data:uZWLvah60aRjIch4UUXmHVsi7dLBDDcd9y9r7izK1V9GYqxA4qXpWDypCY4=,iv:eBefYjtIPQOSZ6U0R0nqBSCK0no3Ox7VOmzzryUEECk=,tag:T5iD26BDnhZcuLIxDx8S5Q==,type:str]
+        nodeStageSecretRef:
+            name: nextcloud-archive-smb
+            namespace: nextcloud
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBFTTlDQ0FUK0xTVXlrVVI5
+            d0hCZm9CRXQvMVJ5aEprR0lOV3dMajlDMUFvCng3VnNTeFBmQnNyNThxOEYzRzM2
+            RjYrd3ptemlzRjlhT2s2Q3o3amZDcDgKLS0tIHY1QjVlMkdrUkpFOW9pZmJYUS91
+            YUdTNzF4bWtPSjdsS0RlR1NDUHlWa3MKX8h14LNJAMFfInteRDvJOXtdqUAfrncO
+            icflN3vxOiHnqjQmRmZY7OLViEcPQX/dCQspw5glODhf6yzQdUHQzA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1guwhf7ux6kphahck7gpulsjcwc58w8uv8y4s2wpsh7cpjhae6yzqa8l2dh
+    encrypted_regex: ^source$
+    lastmodified: "2026-11-12T17:14:52Z"
+    mac: ENC[AES256_GCM,data:p0AdYqPO4GN+YT+mXTDm/ocds5DrNepyxnqemi88UDhW9p+R8VU45cb+PKPlgyCcDL1rwITGjbEynBm5LBFJhHrwlruuVUbfZ0PfWGWW7qc3Wa52nKuiEXLXr4/+2HeVpGU8eO0/yXgzSDcDSOSVZSRM2xCpA0L5UG8Eg/pdMH8=,iv:Sv1w+wWQ6kZ0lkB81JH2ZBgTdS4V8ORaRVWPjLe3pNc=,tag:dHBcuMZhY0fhmTRJ0zaIBA==,type:str]
+    version: 3.13.3

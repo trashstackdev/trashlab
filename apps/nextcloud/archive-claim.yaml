@@ -1,0 +1,14 @@
+# Claim for the Storage Box archive volume in archive-volume.yaml (SOPS-encrypted address)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-archive
+  namespace: nextcloud
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: nextcloud-archive
+  resources:
+    requests:
+      storage: 1Ti
