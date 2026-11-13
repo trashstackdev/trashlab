@@ -115,3 +115,49 @@ spec:
           annotations:
             summary: "The b2-usage job has stopped pushing B2 sizes"
             description: "Check the b2-usage job pods in monitoring (kubectl -n monitoring get jobs) and the b2-usage ExternalSecret."
+    # The host's own package state. A timer on the host writes these numbers every hour into a file that
+    # node-exporter's textfile collector reads (kube-prometheus-stack, prometheus-node-exporter.extraArgs).
+    # Security updates install themselves once a day, everything else waits for an upgrade by hand.
+    - name: host
+      rules:
+        - alert: HostSecurityUpdatesPending
+          expr: host_security_updates_pending > 0
+          for: 2d
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $value }} security updates have been waiting on the host for two days"
+            description: "The automatic updates should have installed them. Check systemctl status unattended-upgrades and /var/log/unattended-upgrades/ on the host."
+        - alert: HostUpdatesPending
+          expr: host_updates_pending > 0
+          for: 7d
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $value }} package updates have been waiting on the host for a week"
+            description: "Run apt update and apt upgrade on the host."
+        - alert: HostRebootRequired
+          expr: host_reboot_required == 1
+          for: 1d
+          labels:
+            severity: warning
+          annotations:
+            summary: "The host needs a reboot"
+            description: "A newer kernel is installed or a package asked for a reboot. Stop Minecraft first, then reboot the host."
+        - alert: HostUpdateCheckStale
+          expr: time() - host_updates_check_timestamp_seconds > 3 * 3600
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "The host's update check has not run for {{ $value | humanizeDuration }}"
+            description: "Check systemctl status host-update-metrics.timer host-update-metrics.service on the host."
+        # 0 means the daily refresh never ran. A day of patience, so a freshly built host does not fire.
+        - alert: HostPackageListsStale
+          expr: time() - host_apt_lists_timestamp_seconds > 3 * 86400
+          for: 1d
+          labels:
+            severity: warning
+          annotations:
+            summary: "The host's package lists have not been refreshed for days"
+            description: "Without fresh lists the pending counts mean nothing. Check systemctl status apt-daily.timer apt-daily.service on the host."
