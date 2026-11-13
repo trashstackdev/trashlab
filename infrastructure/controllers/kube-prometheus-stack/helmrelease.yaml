@@ -76,6 +76,16 @@ spec:
       metricLabelsAllowlist:
         - jobs=[k8up.io/type]
 
+    # The host writes *.prom files (pending package updates, needed reboot) into a folder that node-exporter
+    # reads through the root mount the chart already has. extraArgs replaces the chart's own list, so its two
+    # filesystem excludes are repeated here: compare them with the chart's values.yaml when the chart is bumped.
+    # The folder has to exist on the host, or NodeTextFileCollectorScrapeError fires.
+    prometheus-node-exporter:
+      extraArgs:
+        - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/containerd/.+|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+        - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)$
+        - --collector.textfile.directory=/host/root/var/lib/node_exporter/textfile_collector
+
     # -------------------------------------------------------------------------
     # Prometheus
     # -------------------------------------------------------------------------
