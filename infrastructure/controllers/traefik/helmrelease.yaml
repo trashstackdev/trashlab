@@ -25,6 +25,15 @@ spec:
       prometheus:
         entryPoint: metrics
     ports:
+      web:
+        http:
+          redirections:
+            # Send every plain HTTP request to HTTPS. cert-manager's HTTP-01 checks still work:
+            # Let's Encrypt follows the redirect, and the solver's route is served on websecure too.
+            entryPoint:
+              to: websecure
+              scheme: https
+              permanent: true
       metrics:
         port: 9100
         expose:
