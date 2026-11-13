@@ -28,7 +28,7 @@ spec:
       # Move volume engines to the new default engine after each Longhorn upgrade
       # (live for attached volumes, offline for detached ones)
       concurrentAutomaticEngineUpgradePerNodeLimit: 3
-      # Keep false: when true, every trim-weekly run purges the latest snapshot chain,
+      # Keep false: when true, every trim-daily run purges the latest snapshot chain,
       # including manual snapshots and the base the next incremental backup builds on
       removeSnapshotsDuringFilesystemTrim: false
     persistence:
