@@ -10,5 +10,4 @@ resources:
   - immich
   - longhorn-ui
   - nextcloud
-  - sure
   - traefik-dashboard

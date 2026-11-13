@@ -42,15 +42,6 @@ variable "nextcloud_oidc_client_id" {
   type = string
 }
 
-variable "sure_oidc_client_id" {
-  type = string
-}
-
-variable "sure_oidc_client_secret" {
-  type      = string
-  sensitive = true
-}
-
 variable "grafana_oidc_client_id" {
   type = string
 }
