@@ -58,12 +58,6 @@ resource "authentik_application" "grafana" {
   meta_icon         = "https://raw.githubusercontent.com/grafana/grafana/main/public/img/grafana_icon.svg"
 }
 
-resource "authentik_application" "sure" {
-  name              = "Sure Finance"
-  slug              = "sure"
-  protocol_provider = authentik_provider_oauth2.sure.id
-}
-
 resource "authentik_application" "nextcloud" {
   name              = "Nextcloud"
   slug              = "nextcloud"
@@ -117,7 +111,6 @@ locals {
     longhorn_ui       = authentik_application.longhorn_ui.uuid
     traefik_dashboard = authentik_application.traefik_dashboard.uuid
     grafana           = authentik_application.grafana.uuid
-    sure              = authentik_application.sure.uuid
     nextcloud         = authentik_application.nextcloud.uuid
     immich            = authentik_application.immich.uuid
     dawarich          = authentik_application.dawarich.uuid
