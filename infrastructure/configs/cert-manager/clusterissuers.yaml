@@ -1,0 +1,26 @@
+---
+# Both issuers existed only in the cluster, so a rebuilt cluster could not issue any certificate.
+# Used by the bitwarden-sdk-server certificate.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
+---
+# Let's Encrypt for every public host. The optional contact address is left out on purpose:
+# this repository is public.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-production
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-production
+    solvers:
+      - selector: {}
+        http01:
+          ingress:
+            class: traefik
