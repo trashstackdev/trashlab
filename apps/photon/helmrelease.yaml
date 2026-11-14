@@ -1,0 +1,94 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: photon
+  namespace: photon
+spec:
+  interval: 1h
+  # OCIRepository defined in apps/dawarich/ocirepository.yaml
+  chartRef:
+    kind: OCIRepository
+    name: app-template
+    namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  # Photon geocoder (OpenStreetMap) for Dawarich, so location history never goes to an outside service.
+  # Cluster-internal only: no Ingress.
+  values:
+    controllers:
+      photon:
+        # The data PVC is ReadWriteOnce
+        strategy: Recreate
+        pod:
+          securityContext:
+            # The image's photon user; the entrypoint skips its root-only chown and gosu steps
+            runAsUser: 9011
+            runAsGroup: 9011
+            runAsNonRoot: true
+            fsGroup: 9011
+            fsGroupChangePolicy: OnRootMismatch
+        containers:
+          app:
+            image:
+              repository: rtuszik/photon-docker
+              tag: 2.5.0
+            env:
+              # JSONL mode is the only one that takes several regions. Regions on different continents
+              # make it download the planet dump (about 27 GB) and keep only these countries while importing.
+              IMPORT_MODE: jsonl
+              REGION: usa,germany,japan
+              # Official GraphHopper download server instead of the image's default community mirror.
+              # JSONL mode has no checksum check, so integrity rests on HTTPS from this host.
+              BASE_URL: https://download1.graphhopper.com/public
+              # JSONL mode has no scheduled rebuilds. To refresh the data or change REGION, delete the
+              # photon-data PVC and then the pod; Flux recreates the PVC and the new pod imports again.
+              UPDATE_STRATEGY: DISABLED
+              JAVA_PARAMS: -Xmx6g
+            probes:
+              # The first start imports for hours before Photon listens, so no startup or liveness probe
+              # (the process manager restarts Photon by itself if it dies)
+              startup:
+                enabled: false
+              liveness:
+                enabled: false
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /status
+                    port: 2322
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 3
+            resources:
+              requests:
+                cpu: 100m
+                memory: 2Gi
+              limits:
+                memory: 10Gi
+
+    service:
+      app:
+        controller: photon
+        ports:
+          http:
+            port: 2322
+
+    persistence:
+      data:
+        existingClaim: photon-data
+        globalMounts:
+          - path: /photon/data
+      # Download area for the dump, kept out of Longhorn: freed blocks in a Longhorn volume stay
+      # allocated until a trim. The image empties it after the import and logs a harmless error
+      # when it can't remove the mount point itself.
+      temp:
+        type: emptyDir
+        sizeLimit: 40Gi
+        globalMounts:
+          - path: /photon/data/temp
