@@ -1,5 +1,15 @@
 terraform {
   required_version = ">= 1.8.0"
+
+  # The state lives in the cluster, as a Secret in kube-system with a Lease as lock, so every machine with
+  # admin access to the cluster works on the same state and two runs can't overlap. It holds client secrets,
+  # which the cluster holds anyway. It is gone when the cluster is rebuilt: run `tofu state pull` into a file
+  # before, and `tofu state push` it after.
+  backend "kubernetes" {
+    secret_suffix = "authentik"
+    namespace     = "kube-system"
+    config_path   = "~/.kube/config"
+  }
   required_providers {
     authentik = {
       source  = "goauthentik/authentik"
