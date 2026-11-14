@@ -40,6 +40,14 @@
       ]
     },
     {
+      "description": "Photon gets its own PR: a new Photon version can need a fresh index",
+      "matchPackageNames": ["rtuszik/photon-docker"],
+      "groupName": "photon",
+      "prBodyNotes": [
+        "After merging, check that the `photon` pod turns ready. If Photon rejects the old index, delete the `photon-data` PVC and then the pod so it imports again (several hours, Dawarich geocoding pauses meanwhile)."
+      ]
+    },
+    {
       "description": "Dawarich gets its own PR: updates have broken instances before",
       "matchPackageNames": ["freikin/dawarich"],
       "groupName": "dawarich",

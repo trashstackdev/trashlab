@@ -1,0 +1,20 @@
+---
+# Photon's search index for the regions in helmrelease.yaml, built from OpenStreetMap data.
+# Disposable: deleting the claim makes Photon download and build it again, so no backups.
+# Size estimated from the prebuilt indexes of the three regions (about 19 GB compressed);
+# Longhorn can expand it in place if the import runs out of room.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: photon-data
+  namespace: photon
+  labels:
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/no-backup: enabled
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 60Gi

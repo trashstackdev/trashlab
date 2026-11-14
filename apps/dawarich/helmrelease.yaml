@@ -53,6 +53,12 @@ spec:
                     name: dawarich-db
                     key: password
               REDIS_URL: redis://dawarich-redis:6379
+              # Reverse geocoding through the in-cluster Photon (apps/photon). Set here, these values
+              # take precedence over the geocoding settings in the admin UI and lock them.
+              PHOTON_API_HOST: photon.photon.svc.cluster.local:2322
+              PHOTON_API_USE_HTTPS: "false"
+              # Changing it later only affects new lookups and splits cities in the stats
+              PHOTON_API_LANGUAGE: en
               WEB_CONCURRENCY: "1"
               # Raise temporarily for large imports
               BACKGROUND_PROCESSING_CONCURRENCY: "3"
