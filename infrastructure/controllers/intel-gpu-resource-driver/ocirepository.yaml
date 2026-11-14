@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: intel-gpu-resource-driver
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: oci://ghcr.io/intel/intel-resource-drivers-for-kubernetes/intel-gpu-resource-driver-chart
+  ref:
+    tag: 0.12.0

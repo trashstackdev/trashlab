@@ -8,6 +8,7 @@ resources:
   - external-secrets/
   - flux-operator/
   - hcloud-exporter/
+  - intel-gpu-resource-driver/
   - k8up/
   - longhorn/
   - prometheus-pushgateway/
