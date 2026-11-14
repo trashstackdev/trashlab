@@ -31,5 +31,10 @@ spec:
       # Keep false: when true, every trim-daily run purges the latest snapshot chain,
       # including manual snapshots and the base the next incremental backup builds on
       removeSnapshotsDuringFilesystemTrim: false
+      # One node with two disks: a volume with two replicas keeps one on each disk. The first setting allows
+      # two replicas on the same node at all, the second forbids putting both on the same disk.
+      # Which volumes get two replicas is set per volume (the databases), the default stays one.
+      replicaSoftAntiAffinity: true
+      replicaDiskSoftAntiAffinity: false
     persistence:
       defaultClassReplicaCount: 1
