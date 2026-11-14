@@ -68,7 +68,7 @@
     },
     {
       "type": "stat",
-      "title": "Firing alerts",
+      "title": "Alerts",
       "description": "Alerts firing in Prometheus, without Watchdog and info alerts. The table below lists them.",
       "datasource": {
         "type": "prometheus",
@@ -89,7 +89,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "suffix: firing",
           "mappings": [
             {
               "type": "value",
@@ -140,6 +140,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -158,7 +161,7 @@
     },
     {
       "type": "stat",
-      "title": "Pods not ready",
+      "title": "Pods",
       "description": "Pods that are pending, failed or unknown, plus running pods that aren't ready. Finished job pods don't count.",
       "datasource": {
         "type": "prometheus",
@@ -179,7 +182,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "suffix: not ready",
           "mappings": [
             {
               "type": "value",
@@ -230,6 +233,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -248,7 +254,7 @@
     },
     {
       "type": "stat",
-      "title": "Flux not ready",
+      "title": "Flux",
       "description": "Flux Kustomizations, HelmReleases and sources that aren't ready (from the Flux Operator). The GitOps table lists them.",
       "datasource": {
         "type": "prometheus",
@@ -269,7 +275,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "suffix: not ready",
           "mappings": [
             {
               "type": "value",
@@ -320,6 +326,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -338,7 +347,7 @@
     },
     {
       "type": "stat",
-      "title": "Secrets not synced",
+      "title": "Secrets",
       "description": "ExternalSecrets that can't sync from Bitwarden SM. Workloads keep the last synced value.",
       "datasource": {
         "type": "prometheus",
@@ -359,7 +368,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "suffix: not synced",
           "mappings": [
             {
               "type": "value",
@@ -410,6 +419,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -496,6 +508,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -514,7 +529,7 @@
     },
     {
       "type": "stat",
-      "title": "ex44 disk free",
+      "title": "Disk free",
       "description": "Free space on ex44's root filesystem (NVMe RAID), which also holds Longhorn's volumes.",
       "datasource": {
         "type": "prometheus",
@@ -582,6 +597,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -600,7 +618,7 @@
     },
     {
       "type": "stat",
-      "title": "Offsite backup",
+      "title": "B2 backup",
       "description": "Age of the last successful k8up backup to B2, for the app whose backup is oldest. Red after 26 hours.",
       "datasource": {
         "type": "prometheus",
@@ -676,6 +694,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -694,7 +715,7 @@
     },
     {
       "type": "stat",
-      "title": "Longhorn backup",
+      "title": "Longhorn",
       "description": "Age of the last Longhorn backup to the Storage Box, for the volume whose backup is oldest. Volumes excluded from backups don't count.",
       "datasource": {
         "type": "prometheus",
@@ -758,6 +779,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -776,7 +800,7 @@
     },
     {
       "type": "stat",
-      "title": "Restic errors",
+      "title": "Restic",
       "description": "Files restic couldn't read in the last offsite backup, which k8up still reports as successful. Only the last volume per app is known, and the raw database volumes are skipped.",
       "datasource": {
         "type": "prometheus",
@@ -797,7 +821,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "suffix: errors",
           "mappings": [
             {
               "type": "value",
@@ -848,6 +872,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -934,6 +961,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -952,7 +982,7 @@
     },
     {
       "type": "stat",
-      "title": "Last location",
+      "title": "Location",
       "description": "Time since the newest Dawarich location point. If it keeps growing, iPhone tracking has stopped. The DawarichNoNewPoints alert fires after 24 hours.",
       "datasource": {
         "type": "prometheus",
@@ -1020,6 +1050,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1059,7 +1092,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "suffix: degraded",
           "mappings": [
             {
               "type": "value",
@@ -1110,6 +1143,9 @@
         "orientation": "auto",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "valueSize": 34
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1141,7 +1177,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(ALERTS_FOR_STATE{alertname!~\"Watchdog|InfoInhibitor\"} and ignoring(alertstate) ALERTS{alertstate=\"firing\", severity!=\"info\"}) * 1000",
+          "expr": "label_replace((ALERTS_FOR_STATE{alertname!~\"Watchdog|InfoInhibitor\"} and ignoring(alertstate) ALERTS{alertstate=\"firing\", severity!=\"info\"}) * 1000, \"pod\", \"\", \"pod\", \"kube-prometheus-stack-.+\")",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -1193,7 +1229,8 @@
           "noValue": "Nothing is firing",
           "custom": {
             "align": "auto",
-            "filterable": false
+            "filterable": false,
+            "minWidth": 70
           },
           "color": {
             "mode": "thresholds"
@@ -1212,12 +1249,52 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "Alert"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 260
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Severity"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Namespace"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "Firing since"
             },
             "properties": [
               {
                 "id": "unit",
                 "value": "dateTimeFromNow"
+              },
+              {
+                "id": "custom.width",
+                "value": 140
               }
             ]
           }
@@ -1374,7 +1451,8 @@
           "noValue": "-",
           "custom": {
             "align": "auto",
-            "filterable": false
+            "filterable": false,
+            "minWidth": 70
           },
           "color": {
             "mode": "thresholds"
@@ -1692,6 +1770,10 @@
         "orientation": "vertical",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 36
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1736,7 +1818,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}",
+          "expr": "1 - max(node_filesystem_avail_bytes{mountpoint=\"/\"}) / max(node_filesystem_size_bytes{mountpoint=\"/\"})",
           "editorMode": "code",
           "instant": false,
           "range": true,
@@ -1781,7 +1863,7 @@
       "id": 19,
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 25
       }
@@ -1849,8 +1931,8 @@
       "id": 20,
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 8,
+        "w": 10,
+        "x": 6,
         "y": 25
       }
     },
@@ -2030,7 +2112,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_general_size / hcloud_storagebox_quota",
+          "expr": "max by (name, location) (hcloud_storagebox_general_size) / max by (name, location) (hcloud_storagebox_quota)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2042,7 +2124,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_general_size",
+          "expr": "max by (name, location) (hcloud_storagebox_general_size)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2054,7 +2136,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_quota",
+          "expr": "max by (name, location) (hcloud_storagebox_quota)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2066,7 +2148,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_data_size",
+          "expr": "max by (name, location) (hcloud_storagebox_data_size)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2078,7 +2160,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_snapshot_size",
+          "expr": "max by (name, location) (hcloud_storagebox_snapshot_size)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2090,7 +2172,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_external",
+          "expr": "max by (name, location) (hcloud_storagebox_external)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2102,7 +2184,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_samba",
+          "expr": "max by (name, location) (hcloud_storagebox_samba)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2114,7 +2196,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_ssh",
+          "expr": "max by (name, location) (hcloud_storagebox_ssh)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2126,7 +2208,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "hcloud_storagebox_webdav",
+          "expr": "max by (name, location) (hcloud_storagebox_webdav)",
           "editorMode": "code",
           "instant": true,
           "range": false,
@@ -2149,8 +2231,7 @@
               "job": true,
               "prometheus": true,
               "service": true,
-              "container": true,
-              "id": true
+              "container": true
             },
             "renameByName": {
               "name": "Box",
@@ -2197,7 +2278,8 @@
           "noValue": "No data",
           "custom": {
             "align": "auto",
-            "filterable": false
+            "filterable": false,
+            "minWidth": 70
           },
           "color": {
             "mode": "thresholds"
@@ -2213,6 +2295,18 @@
           }
         },
         "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Box"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
           {
             "matcher": {
               "id": "byName",
@@ -2373,6 +2467,10 @@
                     }
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 150
               }
             ]
           },
@@ -2492,7 +2590,7 @@
       },
       "id": 22,
       "gridPos": {
-        "h": 5,
+        "h": 4,
         "w": 24,
         "x": 0,
         "y": 33
@@ -2507,7 +2605,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 37
       },
       "panels": []
     },
@@ -2662,7 +2760,8 @@
           "noValue": "No data",
           "custom": {
             "align": "auto",
-            "filterable": false
+            "filterable": false,
+            "minWidth": 70
           },
           "color": {
             "mode": "thresholds"
@@ -2919,7 +3018,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 38
       }
     },
     {
@@ -3107,7 +3206,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 46
+        "y": 45
       }
     },
     {
@@ -3296,7 +3395,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 46
+        "y": 45
       }
     },
     {
@@ -3395,7 +3494,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "short"
+                "value": "locale"
               },
               {
                 "id": "decimals",
@@ -3427,7 +3526,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "short"
+                "value": "locale"
               },
               {
                 "id": "decimals",
@@ -3463,7 +3562,7 @@
               },
               {
                 "id": "decimals",
-                "value": 1
+                "value": 0
               },
               {
                 "id": "mappings",
@@ -3491,7 +3590,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "short"
+                "value": "locale"
               },
               {
                 "id": "decimals",
@@ -3554,9 +3653,13 @@
         "graphMode": "none",
         "justifyMode": "center",
         "textMode": "value_and_name",
-        "orientation": "horizontal",
+        "orientation": "vertical",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 24
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -3577,7 +3680,7 @@
         "h": 4,
         "w": 12,
         "x": 0,
-        "y": 53
+        "y": 52
       }
     },
     {
@@ -3800,9 +3903,13 @@
         "graphMode": "none",
         "justifyMode": "center",
         "textMode": "value_and_name",
-        "orientation": "horizontal",
+        "orientation": "vertical",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 24
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -3823,7 +3930,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 53
+        "y": 52
       }
     },
     {
@@ -3974,7 +4081,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "short"
+                "value": "locale"
               },
               {
                 "id": "decimals",
@@ -4037,9 +4144,13 @@
         "graphMode": "none",
         "justifyMode": "center",
         "textMode": "value_and_name",
-        "orientation": "horizontal",
+        "orientation": "vertical",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 24
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -4060,7 +4171,7 @@
         "h": 4,
         "w": 12,
         "x": 0,
-        "y": 57
+        "y": 56
       }
     },
     {
@@ -4135,7 +4246,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "short"
+                "value": "locale"
               },
               {
                 "id": "decimals",
@@ -4225,7 +4336,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "short"
+                "value": "locale"
               },
               {
                 "id": "decimals",
@@ -4256,9 +4367,13 @@
         "graphMode": "none",
         "justifyMode": "center",
         "textMode": "value_and_name",
-        "orientation": "horizontal",
+        "orientation": "vertical",
         "wideLayout": true,
         "showPercentChange": false,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 24
+        },
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -4279,7 +4394,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 57
+        "y": 56
       }
     },
     {
@@ -4291,7 +4406,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 60
       },
       "panels": []
     },
@@ -4369,7 +4484,8 @@
           "noValue": "All Flux resources are ready",
           "custom": {
             "align": "auto",
-            "filterable": false
+            "filterable": false,
+            "minWidth": 70
           },
           "color": {
             "mode": "thresholds"
@@ -4395,10 +4511,10 @@
       },
       "id": 32,
       "gridPos": {
-        "h": 7,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 62
+        "y": 61
       }
     },
     {
@@ -4466,7 +4582,8 @@
           "noValue": "No restarts in 7 days",
           "custom": {
             "align": "auto",
-            "filterable": false
+            "filterable": false,
+            "minWidth": 70
           },
           "color": {
             "mode": "thresholds"
@@ -4485,6 +4602,18 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "Namespace"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "Restarts"
             },
             "properties": [
@@ -4495,6 +4624,10 @@
               {
                 "id": "decimals",
                 "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 90
               }
             ]
           }
@@ -4509,10 +4642,10 @@
       },
       "id": 33,
       "gridPos": {
-        "h": 7,
+        "h": 6,
         "w": 12,
         "x": 12,
-        "y": 62
+        "y": 61
       }
     },
     {
@@ -4530,7 +4663,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval]))",
+          "expr": "1 - avg(max by (cpu) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval])))",
           "editorMode": "code",
           "instant": false,
           "range": true,
@@ -4542,7 +4675,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes",
+          "expr": "1 - max(node_memory_MemAvailable_bytes) / max(node_memory_MemTotal_bytes)",
           "editorMode": "code",
           "instant": false,
           "range": true,
@@ -4620,7 +4753,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 69
+        "y": 67
       }
     },
     {
@@ -4638,7 +4771,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "node_load1",
+          "expr": "max(node_load1)",
           "editorMode": "code",
           "instant": false,
           "range": true,
@@ -4650,7 +4783,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "node_load15",
+          "expr": "max(node_load15)",
           "editorMode": "code",
           "instant": false,
           "range": true,
@@ -4662,7 +4795,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(node_cpu_seconds_total{mode=\"idle\"})",
+          "expr": "count(count by (cpu) (node_cpu_seconds_total{mode=\"idle\"}))",
           "editorMode": "code",
           "instant": false,
           "range": true,
@@ -4765,7 +4898,7 @@
         "h": 7,
         "w": 6,
         "x": 6,
-        "y": 69
+        "y": 67
       }
     },
     {
@@ -4900,7 +5033,7 @@
         "h": 7,
         "w": 6,
         "x": 12,
-        "y": 69
+        "y": 67
       }
     },
     {
@@ -4918,7 +5051,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(node_network_receive_bytes_total{device=\"enp5s0\"}[$__rate_interval])",
+          "expr": "max(rate(node_network_receive_bytes_total{device=\"enp5s0\"}[$__rate_interval]))",
           "editorMode": "code",
           "instant": false,
           "range": true,
@@ -4930,7 +5063,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(node_network_transmit_bytes_total{device=\"enp5s0\"}[$__rate_interval])",
+          "expr": "max(rate(node_network_transmit_bytes_total{device=\"enp5s0\"}[$__rate_interval]))",
           "editorMode": "code",
           "instant": false,
           "range": true,
@@ -5007,7 +5140,7 @@
         "h": 7,
         "w": 6,
         "x": 18,
-        "y": 69
+        "y": 67
       }
     },
     {
@@ -5019,7 +5152,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 74
       },
       "panels": []
     },
@@ -5084,7 +5217,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 77
+        "y": 75
       }
     },
     {
@@ -5151,7 +5284,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 77
+        "y": 75
       }
     },
     {
@@ -5190,7 +5323,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 84
+        "y": 82
       }
     }
   ]
