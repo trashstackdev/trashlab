@@ -65,6 +65,12 @@ spec:
     providers:
       kubernetesCRD:
         allowCrossNamespace: true
+    # The wildcard certificate (infrastructure/configs/cert-manager/wildcard-certificate.yaml) for every host
+    # without its own. Until it is issued, Traefik falls back to its built-in self-signed one.
+    tlsStore:
+      default:
+        defaultCertificate:
+          secretName: wildcard-trashstack-dev-tls
     service:
       spec:
         # Keep client source IPs (single node, so there is no cross-node hop to lose).

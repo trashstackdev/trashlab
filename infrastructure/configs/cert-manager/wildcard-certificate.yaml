@@ -1,0 +1,18 @@
+# One certificate for every subdomain. Each certificate Let's Encrypt issues is published in the public
+# Certificate Transparency logs, so a per-host certificate makes its hostname public. Hosts that use this
+# one appear nowhere (DNS already answers every subdomain with a wildcard record).
+# Traefik serves it as its default certificate (tlsStore in infrastructure/controllers/traefik), so an
+# Ingress uses it by setting the annotation traefik.ingress.kubernetes.io/router.tls: "true" and leaving out
+# both spec.tls and cert-manager's annotation. Hosts with their own certificate keep it.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-trashstack-dev
+  namespace: kube-system
+spec:
+  secretName: wildcard-trashstack-dev-tls
+  dnsNames:
+    - "*.trashstack.dev"
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-dns
