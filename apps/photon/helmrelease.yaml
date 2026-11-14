@@ -10,10 +10,15 @@ spec:
     kind: OCIRepository
     name: app-template
     namespace: flux-system
+  # Helm doesn't wait for the pod to become ready: the first start downloads and imports the dump for hours
+  # before Photon answers, far beyond Helm's 5 minute timeout. Waiting made every install fail, and each
+  # remediation recreated the pod, which restarted the download from zero.
   install:
+    disableWait: true
     remediation:
       retries: 3
   upgrade:
+    disableWait: true
     remediation:
       retries: 3
   # Photon geocoder (OpenStreetMap) for Dawarich, so location history never goes to an outside service.
