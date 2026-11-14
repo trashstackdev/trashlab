@@ -1,0 +1,40 @@
+---
+# Apps whose manifests stay out of this public repo live in the private Forgejo repo
+# trashstackdev/trashlab-private. Flux reads it through Forgejo's cluster-internal Service,
+# so nothing leaves the node, as the read-only Forgejo user flux-reader. The credentials come
+# from Bitwarden (infrastructure/configs/flux-private/), so this source is only ready once
+# infrastructure-configs has run, and only while Forgejo is up.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: trashlab-private
+  namespace: flux-system
+spec:
+  interval: 5m
+  # Plain HTTP inside the cluster: source-controller sends credentials over HTTP for Git
+  url: http://forgejo-http.forgejo.svc.cluster.local:3000/trashstackdev/trashlab-private.git
+  ref:
+    branch: main
+  secretRef:
+    name: trashlab-private-git
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: private
+  namespace: flux-system
+spec:
+  interval: 1h
+  path: ./
+  prune: true
+  # Same age key as this repo
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  sourceRef:
+    kind: GitRepository
+    name: trashlab-private
+  # The private apps use CRDs, secret stores and storage set up by the infrastructure layers
+  dependsOn:
+    - name: infrastructure-configs

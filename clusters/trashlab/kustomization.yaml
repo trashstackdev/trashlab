@@ -4,3 +4,4 @@ resources:
   - flux-instance.yaml
   - infrastructure.yaml
   - apps.yaml
+  - private.yaml

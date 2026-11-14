@@ -4,5 +4,6 @@ resources:
   - cert-manager/
   - readonly-agent/
   - external-secrets/
+  - flux-private/
   - longhorn/
   - notifications/
