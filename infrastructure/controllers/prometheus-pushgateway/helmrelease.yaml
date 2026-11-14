@@ -3,7 +3,8 @@
 # The pods live only minutes, too short for Prometheus to scrape them, so they push here and Prometheus
 # scrapes this. The alert on k8up_backup_restic_last_errors in apps/monitoring/prometheusrules.yaml needs it:
 # k8up reports a backup as successful even when restic couldn't read some files.
-# No persistence: after a restart the values come back with the next nightly push.
+# Also receives the hourly B2 sizes from apps/monitoring/b2-usage.yaml. Pushed values live in memory, so they
+# are saved to a small volume: without it a reboot blanks the restic and B2 panels until the next push.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -28,6 +29,15 @@ spec:
         name: prometheus-community
         namespace: flux-system
   values:
+    persistentVolume:
+      enabled: true
+      size: 256Mi
+    # Only the last pushed values; they come back with the next push, so no Longhorn backup
+    persistentVolumeLabels:
+      recurring-job.longhorn.io/source: enabled
+      recurring-job-group.longhorn.io/no-backup: enabled
+    extraArgs:
+      - --persistence.file=/data/pushgateway.data
     # Keeps the job, instance, namespace and pvc labels the pushers set (honorLabels is on by default)
     serviceMonitor:
       enabled: true
