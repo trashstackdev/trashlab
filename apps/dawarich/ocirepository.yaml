@@ -1,0 +1,12 @@
+---
+# bjw-s app-template: generic chart for apps without an official one (same library as the Immich chart)
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: app-template
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: oci://ghcr.io/bjw-s-labs/helm/app-template
+  ref:
+    tag: 5.3.0

@@ -1,0 +1,15 @@
+---
+# Imports, exports and the static assets volume shared by the web and Sidekiq containers.
+# Joins the Longhorn "default" group, so it is backed up daily.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dawarich-data
+  namespace: dawarich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi

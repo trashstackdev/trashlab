@@ -1,0 +1,117 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: authentik
+  namespace: authentik
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: authentik
+      version: 2026.8.5
+      sourceRef:
+        kind: HelmRepository
+        name: authentik
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    global:
+      env:
+        - name: AUTHENTIK_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: authentik-secret
+              key: secret_key
+        - name: AUTHENTIK_POSTGRESQL__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: authentik-postgresql
+              key: password
+
+    postgresql:
+      enabled: true
+      auth:
+        username: authentik
+        database: authentik
+        existingSecret: authentik-postgresql
+        secretKeys:
+          adminPasswordKey: postgres-password
+          userPasswordKey: password
+          metricsPasswordKey: password
+        # The chart runs the official postgres image, where POSTGRES_USER (authentik) is the superuser:
+        # the exporter's default user "postgres" may not exist
+        metricsUsername: authentik
+      # postgres-exporter sidecar (pg_database_size_bytes, connections). Changes only the pod template.
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+      primary:
+        # Off: the chart policy admits every pod in the cluster; apps/authentik/networkpolicy.yaml replaces it
+        networkPolicy:
+          enabled: false
+        # Offsite backup (backup.yaml): k8up stores this dump. The data PVC can't carry k8up.io/backup: "false"
+        # (StatefulSet volumeClaimTemplates are immutable), so its live files are copied too: restore from the dump.
+        podAnnotations:
+          k8up.io/backupcommand: sh -c 'PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")" pg_dump -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DATABASE" --clean --if-exists'
+          k8up.io/backupcommand-container: postgresql
+          k8up.io/file-extension: .sql
+        persistence:
+          enabled: true
+          storageClass: longhorn
+          size: 8Gi
+        # ~330 MiB typical (Oct 2026)
+        resources:
+          requests:
+            cpu: 50m
+            memory: 384Mi
+          limits:
+            memory: 1Gi
+
+    # ~480 MiB typical (Oct 2026)
+    worker:
+      # Task errors (port 9300, already open in the pod)
+      metrics: &metrics
+        enabled: true
+        serviceMonitor:
+          enabled: true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+
+    server:
+      # Flow executions (a stand-in for logins) and connected outposts
+      metrics: *metrics
+      # ~750 MiB typical, 900 MiB peak (Oct 2026)
+      resources:
+        requests:
+          cpu: 100m
+          memory: 768Mi
+        limits:
+          memory: 1536Mi
+      ingress:
+        enabled: true
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        hosts:
+          - auth.trashstack.dev
+        tls:
+          - hosts:
+              - auth.trashstack.dev
+            secretName: authentik-tls

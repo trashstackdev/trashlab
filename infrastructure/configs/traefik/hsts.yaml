@@ -1,0 +1,12 @@
+# HSTS for every public host: browsers that visited once stay on HTTPS for a year, even if someone
+# strips the redirect on the way. No includeSubDomains or preload: those are hard to take back.
+# Used on Traefik's websecure entrypoint (infrastructure/controllers/traefik/helmrelease.yaml, step 2).
+# Lives in the configs layer because the Middleware CRD comes with Traefik's chart.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: hsts
+  namespace: kube-system
+spec:
+  headers:
+    stsSeconds: 31536000

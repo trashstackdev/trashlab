@@ -1,0 +1,149 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nextcloud
+  namespace: nextcloud
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: nextcloud
+      version: 9.4.4
+      sourceRef:
+        kind: HelmRepository
+        name: nextcloud
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    image:
+      tag: 35.0.3-apache
+    nextcloud:
+      host: cloud.trashstack.dev
+      existingSecret:
+        enabled: true
+        secretName: nextcloud
+        # serverinfo token for the metrics exporter (externalsecrets.yaml). Registered once in Nextcloud with
+        # occ config:app:set serverinfo token --value <token>
+        tokenKey: nextcloud-token
+      extraEnv:
+        - name: OVERWRITEPROTOCOL
+          value: https
+        - name: OVERWRITEHOST
+          value: cloud.trashstack.dev
+        - name: overwrite.cli.url
+          value: https://cloud.trashstack.dev
+        # Traefik runs in the pod network and forwards the client IP in X-Forwarded-For
+        - name: TRUSTED_PROXIES
+          value: 10.42.0.0/16
+        - name: APACHE_DISABLE_REWRITE_IP
+          value: "1"
+      phpConfigs:
+        opcache.interned_strings_buffer: "10"
+      # Login only through Authentik: hide the local password form. Its only local user (the old admin
+      # account) is disabled. Break-glass if Authentik is down: revert this, or use occ in the pod.
+      configs:
+        login.config.php: |-
+          <?php
+          $CONFIG = array(
+            'hide_login_form' => true,
+          );
+      # Archive on the Storage Box (archive-volume.yaml). Registered once in Nextcloud as external storage for one user:
+      #   occ app:enable files_external
+      #   occ files_external:create Archive local null::null -c datadir=/mnt/archive
+      #   occ files_external:applicable --add-user <user id> <mount id>
+      extraVolumes:
+        - name: archive
+          persistentVolumeClaim:
+            claimName: nextcloud-archive
+      extraVolumeMounts:
+        - name: archive
+          mountPath: /mnt/archive
+
+    internalDatabase:
+      enabled: false
+
+    # CloudNativePG (database.yaml) and Valkey (valkey.yaml) instead of the Bitnami subcharts since 2026-11-16.
+    # Nextcloud keeps dbhost and redis.host in config.php too; they were set with occ during the switch.
+    postgresql:
+      enabled: false
+    externalDatabase:
+      enabled: true
+      type: postgresql
+      host: nextcloud-db-rw
+      database: nextcloud
+      existingSecret:
+        enabled: true
+        secretName: nextcloud-cnpg-db
+        usernameKey: username
+        passwordKey: password
+
+    redis:
+      enabled: false
+    externalRedis:
+      enabled: true
+      host: nextcloud-valkey
+      port: "6379"
+      existingSecret:
+        enabled: true
+        secretName: nextcloud-redis
+        passwordKey: redis-password
+
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 50Gi
+
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+        traefik.ingress.kubernetes.io/router.middlewares: nextcloud-nextcloud-chain@kubernetescrd
+      tls:
+        - hosts:
+            - cloud.trashstack.dev
+          secretName: nextcloud-tls
+
+    # nextcloud-exporter (users, active users, files, shares, free space) behind Service nextcloud-metrics.
+    # It reaches Nextcloud through the cluster Service; its pod IP is in TRUSTED_PROXIES, so Nextcloud
+    # applies OVERWRITEHOST and the internal hostname needs no trusted_domains entry.
+    # Scraped by monitoring.yaml: the chart's own ServiceMonitor would also scrape Nextcloud itself (403).
+    metrics:
+      enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+      securityContext:
+        runAsUser: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+
+    # Run background jobs (log rotation, trash/version expiry) on a schedule instead of on page loads
+    cronjob:
+      enabled: true
+      sidecar:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 1Gi
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 2Gi

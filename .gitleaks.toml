@@ -1,0 +1,10 @@
+# gitleaks: the default rules, minus Bitwarden Secrets Manager IDs
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Bitwarden Secrets Manager IDs (remoteRef key in ExternalSecrets): references, not secrets"
+regexTarget = "line"
+regexes = [
+  '''^[+-]?\s*key:\s*"?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"?\s*(#.*)?$''',
+]

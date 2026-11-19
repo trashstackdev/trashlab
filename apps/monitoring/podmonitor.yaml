@@ -1,0 +1,26 @@
+# Scrape metrics from all Flux controllers in flux-system.
+# Flux controllers expose metrics on port http-prom (8080) by default.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: flux-system
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - flux-system
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - helm-controller
+          - source-controller
+          - kustomize-controller
+          - notification-controller
+  podMetricsEndpoints:
+    - port: http-prom
+      relabelings:
+        - sourceLabels:
+            - __meta_kubernetes_pod_label_app
+          targetLabel: controller

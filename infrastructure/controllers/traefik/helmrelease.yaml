@@ -1,0 +1,89 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  upgrade:
+    crds: CreateReplace
+  chart:
+    spec:
+      chart: traefik
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: traefik
+        namespace: flux-system
+      version: 41.7.1
+  interval: 1m0s
+  releaseName: traefik
+  values:
+    # Pinned ahead of the chart's appVersion for security releases (GHSA-xv5x-242w-7hf7 is fixed in 3.7.17);
+    # Renovate tracks it (renovate.json). Drop it once the chart ships a newer Traefik.
+    image:
+      repository: traefik
+      tag: v3.7.19
+    api:
+      insecure: true
+    metrics:
+      prometheus:
+        entryPoint: metrics
+    ports:
+      web:
+        http:
+          redirections:
+            # Send every plain HTTP request to HTTPS. cert-manager's HTTP-01 checks still work:
+            # Let's Encrypt follows the redirect, and the solver's route is served on websecure too.
+            entryPoint:
+              to: websecure
+              scheme: https
+              permanent: true
+      metrics:
+        port: 9100
+        expose:
+          default: false
+      websecure:
+        http:
+          # HSTS on every HTTPS answer (infrastructure/configs/traefik/hsts.yaml)
+          middlewares:
+            - kube-system-hsts@kubernetescrd
+        transport:
+          respondingTimeouts:
+            # Traefik v3 cuts requests off after 60s, which breaks large uploads (Immich videos over mobile data)
+            # 600s still cut off 0.7-1 GB videos at ~1.5 MB/s uplink; 3600s covers ~5 GB
+            readTimeout: 3600s
+    # ~130 MiB typical (Oct 2026)
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+    # Access log for every request. Vector keeps only failed (5xx) or slow (>60s) ones.
+    # Query parameters (share keys, tokens) are dropped; of the headers only User-Agent and Referer are kept.
+    accessLog:
+      enabled: true
+      format: json
+      fields:
+        queryParameters:
+          defaultMode: drop
+        headers:
+          defaultMode: drop
+          names:
+            User-Agent: keep
+            Referer: keep
+    providers:
+      kubernetesCRD:
+        allowCrossNamespace: true
+    # The wildcard certificate (infrastructure/configs/cert-manager/wildcard-certificate.yaml) for every host
+    # without its own. Until it is issued, Traefik falls back to its built-in self-signed one.
+    tlsStore:
+      default:
+        defaultCertificate:
+          secretName: wildcard-trashstack-dev-tls
+    service:
+      spec:
+        # Keep client source IPs (single node, so there is no cross-node hop to lose).
+        # Apps behind Traefik must trust the pod network (10.42.0.0/16) for X-Forwarded-For.
+        externalTrafficPolicy: Local

@@ -1,0 +1,18 @@
+---
+# Log storage. Logs are not worth backing up, so the volume is in Longhorn's no-backup group.
+# VictoriaLogs deletes the oldest logs at 10 GiB (see helmrelease.yaml), well below this size.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: victoria-logs
+  namespace: monitoring
+  labels:
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/no-backup: enabled
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 15Gi

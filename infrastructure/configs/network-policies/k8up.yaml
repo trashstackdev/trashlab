@@ -1,0 +1,35 @@
+# k8up: backup, check and prune pods run in the app namespaces and push to the Pushgateway in monitoring;
+# nothing calls the operator except Prometheus (and kubelet probes from the node). k8up registers no webhooks.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: k8up
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# ServiceMonitor k8up/k8up-monitor (Service k8up-metrics, port http)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus
+  namespace: k8up
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: k8up
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8080

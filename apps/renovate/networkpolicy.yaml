@@ -1,0 +1,10 @@
+# Renovate only connects out (to Forgejo and the registries) and listens on nothing
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: renovate
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

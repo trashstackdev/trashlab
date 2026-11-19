@@ -1,0 +1,36 @@
+# default: no pods today. BlueMap's backend is the host (Endpoints <public-ip>:8100), which policies do not touch.
+# The only pods that will ever run here are cert-manager's HTTP-01 solvers for bluemap-tls.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# cert-manager's HTTP-01 solver for bluemap-tls (letsencrypt-production, next renewal around 2027-01-13).
+# Not needed once bluemap uses the wildcard certificate.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-acme-http01-solver
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8089

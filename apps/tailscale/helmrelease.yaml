@@ -1,0 +1,48 @@
+# Tailscale's Kubernetes operator: puts chosen Services on the tailnet, each as its own device with a MagicDNS
+# name, reachable only from the tailnet and only as its ACLs allow. Used for admin UIs that get no public
+# address. Traefik can't restrict a host to the tailnet: traffic to ex44's Tailscale address passes ServiceLB,
+# which rewrites the sender to a pod address (MASQUERADE in the svclb-traefik pod, checked 2026-11-15).
+# A Service joins the tailnet with the annotations tailscale.com/expose: "true" and tailscale.com/hostname.
+# Its proxy runs in this namespace (privileged, it creates a tun device) and gets the tag tag:k8s.
+# Tailnet policy needed first: tagOwners "tag:k8s-operator": [] and "tag:k8s": ["tag:k8s-operator"].
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tailscale-operator
+  namespace: tailscale
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tailscale-operator
+      version: 1.104.7
+      sourceRef:
+        kind: HelmRepository
+        name: tailscale
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # client_id and client_secret as files from the ExternalSecret (externalsecret.yaml)
+    oauthSecretVolume:
+      secret:
+        secretName: tailscale-operator-oauth
+    operatorConfig:
+      hostname: trashlab-operator
+      defaultTags:
+        - tag:k8s-operator
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+    proxyConfig:
+      defaultTags: tag:k8s
+    # No access to the Kubernetes API through the tailnet
+    apiServerProxyConfig:
+      mode: "false"

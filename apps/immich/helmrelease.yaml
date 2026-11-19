@@ -1,0 +1,138 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: immich
+    namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Shared by the server and machine-learning components
+    controllers:
+      main:
+        containers:
+          main:
+            image:
+              # The chart does not follow Immich releases: bump this tag (Renovate does) and read the release notes first
+              tag: v3.4.2
+            env:
+              TZ: Europe/Berlin
+
+    immich:
+      # Prometheus telemetry on ports 8081 (API) and 8082 (jobs), scraped by the chart's ServiceMonitor
+      metrics:
+        enabled: true
+      persistence:
+        library:
+          # Storage Box over SMB, mounted at /data (see storage.yaml)
+          existingClaim: immich-library
+      # Config file rendered by ESO (externalsecrets.yaml), since it holds the OIDC client secret
+      existingConfiguration: immich-config
+      configurationKind: Secret
+
+    valkey:
+      enabled: true
+
+    server:
+      persistence:
+        # Thumbnails on local NVMe for a fast UI. Transcoded videos stay on the Storage Box (/data):
+        # they filled the 50 GiB volume within a day of importing, and streaming them over SMB is fine.
+        thumbs:
+          enabled: true
+          existingClaim: immich-thumbs
+          globalMounts:
+            - path: /data/thumbs
+              subPath: thumbs
+      controllers:
+        main:
+          containers:
+            main:
+              env:
+                # The chart sets "all"; skip repo and io, which add a histogram per repository method
+                IMMICH_TELEMETRY_INCLUDE: api,host,job
+                # Workaround for Immich 3.4.2: with the default host "::" the metrics exporter builds the invalid
+                # base URL http://:::8081/ and answers every scrape with 400 (immich-app/immich#33466, fixed
+                # upstream in #33480, not released yet). 0.0.0.0 restores the metrics; the cluster is IPv4 only.
+                # Remove once Immich runs a release with that fix (3.4.3 or later).
+                IMMICH_HOST: 0.0.0.0
+                DB_HOSTNAME: immich-db-rw
+                DB_DATABASE_NAME: immich
+                DB_USERNAME:
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-db
+                      key: username
+                DB_PASSWORD:
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-db
+                      key: password
+              # The chart allows 1s; while thumbnailing and transcoding the API can take longer, the pod then
+              # drops out of the Service briefly and in-flight uploads fail
+              probes:
+                liveness: &probe
+                  enabled: true
+                  custom: true
+                  spec:
+                    httpGet:
+                      path: /api/server/ping
+                      port: http
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 6
+                readiness: *probe
+              # ~3.4 GiB while importing (Oct 2026); thumbnailing and transcoding run in this container
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 2Gi
+                limits:
+                  memory: 8Gi
+      service:
+        main:
+          annotations:
+            # See serverstransport.yaml
+            traefik.ingress.kubernetes.io/service.serverstransport: immich-immich@kubernetescrd
+      ingress:
+        main:
+          enabled: true
+          annotations:
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            cert-manager.io/cluster-issuer: letsencrypt-production
+          hosts:
+            - host: photos.trashstack.dev
+              paths:
+                - path: /
+                  service:
+                    identifier: main
+          tls:
+            - hosts:
+                - photos.trashstack.dev
+              secretName: photos-trashstack-dev-tls
+
+    machine-learning:
+      persistence:
+        cache:
+          enabled: true
+          type: persistentVolumeClaim
+          existingClaim: immich-ml-cache
+      controllers:
+        main:
+          containers:
+            main:
+              # ~1.6 GiB typical, 2.2 GiB peak, up to 4 cores while indexing (Oct 2026)
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 2Gi
+                limits:
+                  memory: 6Gi

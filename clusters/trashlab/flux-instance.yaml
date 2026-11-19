@@ -1,0 +1,68 @@
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "1h"
+    fluxcd.controlplane.io/reconcileTimeout: "5m"
+spec:
+  distribution:
+    # 2.9 patch line: the operator follows its patches by itself. 2.8 gets no patches and is hit by
+    # GHSA-mwcp-qpcg-fr7c (fixed in 2.9.4). 2.10 has breaking changes (RBAC, notification v1): a separate step.
+    version: "2.9.x"
+    registry: ghcr.io/fluxcd
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    # The operator's own policies admit every namespace (scraping, webhooks); the narrow set is in
+    # infrastructure/configs/network-policies/flux-system.yaml
+    networkPolicy: false
+  sync:
+    kind: GitRepository
+    # Forgejo's cluster-internal Service: the root sync stays on the node and needs neither Traefik nor
+    # Authentik. Plain HTTP inside the cluster, source-controller sends the credentials over it.
+    # Without a working Forgejo (a commit that breaks it, a rebuild), this sync can't fetch: fix Forgejo by
+    # hand with kubectl, or bootstrap from the GitLab mirror.
+    url: http://forgejo-http.forgejo.svc.cluster.local:3000/trashstackdev/trashlab.git
+    ref: refs/heads/main
+    path: clusters/trashlab
+    # Read-only Forgejo user flux-reader (infrastructure/configs/flux-source/)
+    pullSecret: trashlab-private-git
+  kustomize:
+    patches:
+      # Pod Security: every Flux pod already meets restricted (checked 2026-11-16)
+      - patch: |
+          - op: add
+            path: /metadata/labels/pod-security.kubernetes.io~1enforce
+            value: restricted
+          - op: add
+            path: /metadata/labels/pod-security.kubernetes.io~1enforce-version
+            value: latest
+        target:
+          kind: Namespace
+          name: flux-system
+      - patch: |
+          - op: add
+            path: /spec/decryption
+            value:
+              provider: sops
+              secretRef:
+                name: sops-age
+        target:
+          kind: Kustomization
+          labelSelector: "app.kubernetes.io/part-of=flux"
+      # A layer whose dependency isn't ready yet looks again after 5s instead of 30s, so a commit runs
+      # through controllers, configs and apps in seconds
+      - patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --requeue-dependency=5s
+        target:
+          kind: Deployment
+          name: "(kustomize-controller|helm-controller)"

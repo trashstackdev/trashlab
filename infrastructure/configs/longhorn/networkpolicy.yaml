@@ -1,0 +1,144 @@
+# The Longhorn chart's longhorn-manager NetworkPolicy only admits Longhorn's own pods,
+# which rejects Prometheus on the manager metrics port
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scraping
+  namespace: longhorn-system
+spec:
+  podSelector:
+    matchLabels:
+      app: longhorn-manager
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9500
+---
+# The chart has no policy for share managers (RWX volumes). Their NFS export is read-write without a
+# client list, so without a policy every pod could mount it. The node mounts it from the cni0 address,
+# and longhorn-manager talks to the share manager over gRPC on 9600.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: share-manager
+  namespace: longhorn-system
+spec:
+  podSelector:
+    matchLabels:
+      longhorn.io/component: share-manager
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: longhorn-manager
+      ports:
+        - protocol: TCP
+          port: 9600
+        - protocol: TCP
+          port: 2049
+    - from:
+        - ipBlock:
+            cidr: 10.42.0.1/32
+        - podSelector:
+            matchLabels:
+              app: longhorn-csi-plugin
+      ports:
+        - protocol: TCP
+          port: 2049
+---
+# The UI proxies the full Longhorn API (it can delete volumes) and has no login of its own.
+# Only Traefik and the start page may reach it; the public host sits behind Authentik's forward auth.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: longhorn-ui
+  namespace: longhorn-system
+spec:
+  podSelector:
+    matchLabels:
+      app: longhorn-ui
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+        # Homepage's Longhorn status and info widget (http://longhorn-frontend.longhorn-system.svc)
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: homepage
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: homepage
+      ports:
+        - protocol: TCP
+          port: 8000
+---
+# infrastructure/configs/longhorn/networkpolicy.yaml (PR #109 is merged) plus the changes for default deny.
+# The chart's six policies stay as they are (Helm-managed).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: longhorn-system
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# cert-manager's HTTP-01 solver for longhorn-trashstack-dev-tls (letsencrypt-production, next renewal
+# around 2027-01-13). Not needed once longhorn.trashstack.dev uses the wildcard certificate.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-acme-http01-solver
+  namespace: longhorn-system
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8089
+---
+# longhorn-manager drives every Longhorn component. This covers pods it creates on demand that no other
+# policy selects, such as the support bundle manager it downloads bundles from.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-longhorn-manager
+  namespace: longhorn-system
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: longhorn-manager

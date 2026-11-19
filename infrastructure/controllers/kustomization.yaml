@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - cert-manager/
+  - cloudnative-pg/
+  - csi-driver-smb/
+  - kube-prometheus-stack/
+  - external-secrets/
+  - flux-operator/
+  - hcloud-exporter/
+  - intel-gpu-resource-driver/
+  - k8up/
+  - longhorn/
+  - prometheus-pushgateway/
+  - reloader/
+  - traefik/
+  - victoria-logs/
+  - vmalert/

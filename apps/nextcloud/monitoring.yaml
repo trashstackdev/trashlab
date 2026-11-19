@@ -1,0 +1,16 @@
+---
+# Scrape only nextcloud-exporter (helmrelease.yaml, metrics). The chart's ServiceMonitor would also select the
+# Nextcloud Service itself, which answers 403. Each scrape calls Nextcloud's serverinfo API, so not too often.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nextcloud-exporter
+  namespace: nextcloud
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nextcloud
+      app.kubernetes.io/component: metrics
+  endpoints:
+    - port: http
+      interval: 60s

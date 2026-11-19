@@ -1,0 +1,232 @@
+# monitoring: default deny plus one allow per destination. node-exporter runs in the host network and is not affected.
+# Traffic from the node itself (kubelet probes, the API server calling the operator's admission webhook, the API
+# server's service proxy) is accepted by kube-router before any policy.
+# No allow on purpose: Vector 9090 (exporter not scraped), vmalert 8880, Grafana 9094, 6060 and sidecar 8080,
+# kube-state-metrics 8081, Alertmanager 9094 (one replica, clustering off).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: monitoring
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Prometheus: Grafana's data source, Homepage's prometheusmetric widgets, the junkyard diorama's fixed queries
+# (apps/junkyard/) and its own scrapes (9090, config-reloader 8080)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: grafana
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: homepage
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: homepage
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: junkyard
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: junkyard
+      ports:
+        - protocol: TCP
+          port: 9090
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# Alertmanager: alerts from Prometheus and vmalert, Grafana's Alertmanager data source, scrapes of 9093 and the reloader (8080)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: alertmanager
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: alertmanager
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: victoria-metrics-alert
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: grafana
+      ports:
+        - protocol: TCP
+          port: 9093
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# Grafana: grafana.trashstack.dev through Traefik (Service port 80, pod port 3000) and the Prometheus scrape
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+# VictoriaLogs: Vector pushes pod logs and the host journal, Grafana and vmalert query them
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: victoria-logs
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: victoria-logs-single
+      app.kubernetes.io/instance: victoria-logs
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - vector
+                  - grafana
+                  - victoria-metrics-alert
+      ports:
+        - protocol: TCP
+          port: 9428
+---
+# Pushgateway: Prometheus scrapes it; k8up backup, prebackup, check and prune pods push from every backed-up namespace;
+# the b2-usage CronJob pushes hourly. b2-usage pods have no stable label of their own, so this admits any Job pod in
+# monitoring (b2-usage is the only Job here). A label on the CronJob's pod template would allow a tighter rule.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pushgateway
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus-pushgateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+        - podSelector:
+            matchExpressions:
+              - key: batch.kubernetes.io/job-name
+                operator: Exists
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8upjob: "true"
+      ports:
+        - protocol: TCP
+          port: 9091
+---
+# Exporters scraped by Prometheus: kube-state-metrics (8080), prometheus-operator (10250, its webhook comes from the node),
+# hcloud-exporter (9501)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: exporters
+  namespace: monitoring
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - kube-state-metrics
+          - kube-prometheus-stack-prometheus-operator
+          - hcloud-exporter
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 10250
+        - protocol: TCP
+          port: 9501
+---
+# cert-manager HTTP-01 solver for grafana-tls (renewal about every 60 days), reached through Traefik
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acme-http01-solver
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8089

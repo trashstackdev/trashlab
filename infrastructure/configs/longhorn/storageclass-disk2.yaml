@@ -1,0 +1,18 @@
+# Volumes on Longhorn's second disk (/var/lib/longhorn2, tagged "disk2"), for bulky data that can be rebuilt
+# or downloaded again: one replica, kept when its claim is deleted. The tag is set by hand on the Longhorn node
+# (spec.disks.disk2.tags), like the disk itself, so a rebuilt cluster needs it again (rebuild runbook).
+# Claims of this class still join Longhorn's "default" recurring-job group unless labelled otherwise.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-disk2
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "1"
+  diskSelector: disk2
+  dataEngine: v1
+  fsType: ext4
+  staleReplicaTimeout: "30"

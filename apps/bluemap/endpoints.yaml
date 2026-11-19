@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: bluemap
+  namespace: default
+subsets:
+  - addresses:
+      - ip: <public-ip>
+    ports:
+      - name: http
+        port: 8100

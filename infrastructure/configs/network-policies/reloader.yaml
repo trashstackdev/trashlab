@@ -1,0 +1,10 @@
+# reloader: no client besides kubelet probes from the node. Reloader only talks to the API server.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: reloader
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

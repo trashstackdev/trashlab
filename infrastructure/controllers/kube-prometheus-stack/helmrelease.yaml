@@ -1,0 +1,345 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 1h
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 91.9.0
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+
+  values:
+    # -------------------------------------------------------------------------
+    # Default rules
+    # -------------------------------------------------------------------------
+    defaultRules:
+      rules:
+        # k3s uses embedded etcd — default etcd alert rules assume a standalone
+        # etcd cluster with different metrics and won't fire correctly
+        etcd: false
+
+    kubeControllerManager:
+      enabled: true
+      endpoints:
+        - <public-ip>
+      service:
+        enabled: true
+        port: 10257
+        targetPort: 10257
+      serviceMonitor:
+        https: true
+        insecureSkipVerify: true
+        serverName: localhost
+
+    kubeScheduler:
+      enabled: true
+      endpoints:
+        - <public-ip>
+      service:
+        enabled: true
+        port: 10259
+        targetPort: 10259
+      serviceMonitor:
+        https: true
+        insecureSkipVerify: true
+        serverName: localhost
+
+    kubeProxy:
+      enabled: true
+      endpoints:
+        - <public-ip>
+      service:
+        enabled: true
+        port: 10249
+        targetPort: 10249
+
+    # This k3s node runs on SQLite, not etcd: there is nothing to scrape on 2381
+    kubeEtcd:
+      enabled: false
+
+    # Expose k8up's job type as label_k8up_io_type on kube_job_labels, for the offsite backup alerts
+    kube-state-metrics:
+      metricLabelsAllowlist:
+        - jobs=[k8up.io/type]
+
+    # The host writes *.prom files (pending package updates, needed reboot) into a folder that node-exporter
+    # reads through the root mount the chart already has. extraArgs replaces the chart's own list, so its two
+    # filesystem excludes are repeated here: compare them with the chart's values.yaml when the chart is bumped.
+    # The folder has to exist on the host, or NodeTextFileCollectorScrapeError fires.
+    prometheus-node-exporter:
+      extraArgs:
+        - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/containerd/.+|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+        - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)$
+        - --collector.textfile.directory=/host/root/var/lib/node_exporter/textfile_collector
+
+    # -------------------------------------------------------------------------
+    # Prometheus
+    # -------------------------------------------------------------------------
+    prometheus:
+      prometheusSpec:
+        retention: 30d
+        retentionSize: "20GB"
+        # ~2.7 GiB typical, 3 GiB peak (Oct 2026); no CPU limit on purpose
+        resources:
+          requests:
+            cpu: 100m
+            memory: 3Gi
+          limits:
+            memory: 5Gi
+        # Discover ServiceMonitors/PodMonitors/Rules across all namespaces,
+        # not just those created by this Helm release
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+        storageSpec:
+          volumeClaimTemplate:
+            # Metrics are disposable and churn heavily: keep them out of Longhorn backups
+            metadata:
+              labels:
+                recurring-job.longhorn.io/source: enabled
+                recurring-job-group.longhorn.io/no-backup: enabled
+            spec:
+              storageClassName: longhorn
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 25Gi
+
+    # -------------------------------------------------------------------------
+    # Alertmanager
+    # -------------------------------------------------------------------------
+    alertmanager:
+      # Alerts go to Discord #alerts (same webhook as Flux's discord-alerts provider).
+      # The URL is read from the mounted alertmanager-discord Secret (ESO), never from values.
+      config:
+        global:
+          resolve_timeout: 5m
+        route:
+          group_by:
+            - namespace
+            - alertname
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 12h
+          receiver: discord
+          routes:
+            # Dead man's switch: Watchdog always fires, so Alertmanager pings healthchecks.io every minute.
+            # healthchecks.io alerts (outside this cluster) when the pings stop, e.g. when ex44 is down.
+            - receiver: healthchecks
+              matchers:
+                - alertname = "Watchdog"
+              group_wait: 0s
+              group_interval: 1m
+              repeat_interval: 1m
+            # One-off events (logins, new USB devices: vmalert, ../vmalert): one message each, no "resolved",
+            # no repeats. group_by '...' sends every alert on its own.
+            - receiver: discord-events
+              matchers:
+                - kind = "event"
+              group_by:
+                - "..."
+              group_wait: 0s
+              repeat_interval: 24h
+            # Always-firing helper alerts and info-level noise stay out of Discord
+            - receiver: "null"
+              matchers:
+                - alertname = "InfoInhibitor"
+            - receiver: "null"
+              matchers:
+                - severity = "info"
+        inhibit_rules:
+          - source_matchers:
+              - severity = critical
+            target_matchers:
+              - severity =~ warning|info
+            equal:
+              - namespace
+              - alertname
+          - source_matchers:
+              - severity = warning
+            target_matchers:
+              - severity = info
+            equal:
+              - namespace
+              - alertname
+          - source_matchers:
+              - alertname = InfoInhibitor
+            target_matchers:
+              - severity = info
+            equal:
+              - namespace
+          - target_matchers:
+              - alertname = InfoInhibitor
+        receivers:
+          - name: "null"
+          - name: discord
+            discord_configs:
+              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord/webhook-url
+                send_resolved: true
+          - name: discord-events
+            discord_configs:
+              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord/webhook-url
+                send_resolved: false
+          - name: healthchecks
+            webhook_configs:
+              - url_file: /etc/alertmanager/secrets/alertmanager-healthchecks/ping-url
+                send_resolved: false
+        templates:
+          - /etc/alertmanager/config/*.tmpl
+      alertmanagerSpec:
+        replicas: 1
+        # Mounted at /etc/alertmanager/secrets/<name>/. Both must exist, or Alertmanager can't start.
+        secrets:
+          - alertmanager-discord
+          - alertmanager-healthchecks
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: longhorn
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 2Gi
+
+    # -------------------------------------------------------------------------
+    # Grafana
+    # -------------------------------------------------------------------------
+    grafana:
+      # Pinned ahead of the subchart's appVersion for security releases; Renovate tracks it (renovate.json)
+      image:
+        repository: grafana/grafana
+        tag: 13.2.6-distroless
+
+      # A Role in monitoring instead of a ClusterRole: the sidecars read configmaps and secrets, and
+      # cluster-wide that let the public Grafana pod read every Secret in the cluster.
+      # All dashboards and data sources live in monitoring.
+      rbac:
+        namespaced: true
+
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
+
+      # OIDC client secret injected as GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET env var
+      envFromSecret: grafana-oauth
+      # Restart Grafana when the OIDC client secret is rotated in Bitwarden SM
+      annotations:
+        secret.reloader.stakater.com/reload: grafana-oauth
+
+      grafana.ini:
+        server:
+          root_url: https://grafana.trashstack.dev
+        # The trashlab overview (apps/monitoring/dashboards), written there by the dashboard sidecar
+        dashboards:
+          default_home_dashboard_path: /tmp/dashboards/trashlab-overview.json
+        # Login only through Authentik. Basic auth stays on: the sidecars reload provisioning with the
+        # admin login. Break-glass: grafana cli admin reset-admin-password inside the pod.
+        auth:
+          disable_login_form: true
+        auth.generic_oauth:
+          enabled: true
+          name: Authentik
+          client_id: arY3821CB3oLlgVS8ikgw7A2n7oNpZ7uhdeT0p6N
+          scopes: openid email profile offline_access
+          auth_url: https://auth.trashstack.dev/application/o/authorize/
+          token_url: https://auth.trashstack.dev/application/o/token/
+          api_url: https://auth.trashstack.dev/application/o/userinfo/
+          role_attribute_path: "contains(groups, 'authentik Admins') && 'Admin' || 'Viewer'"
+          allow_sign_up: true
+          use_pkce: true
+          use_refresh_token: true
+          signout_redirect_url: https://auth.trashstack.dev/application/o/grafana/end-session/
+
+      # Search logs from VictoriaLogs (infrastructure/controllers/victoria-logs)
+      plugins:
+        - victoriametrics-logs-datasource
+      # Grafana updates provisioned data sources by uid, so the switch to the fixed uid below failed with
+      # "data source not found". Deleting by name first lets provisioning recreate it with that uid on every reload.
+      deleteDatasources:
+        - name: VictoriaLogs
+          orgId: 1
+      additionalDataSources:
+        - name: VictoriaLogs
+          # Fixed uid, referenced by the trashlab overview dashboard
+          uid: victorialogs
+          type: victoriametrics-logs-datasource
+          access: proxy
+          url: http://victoria-logs.monitoring.svc:9428
+
+      # ~400 MiB typical, 680 MiB peak (Oct 2026)
+      resources:
+        requests:
+          cpu: 50m
+          memory: 384Mi
+        limits:
+          memory: 1Gi
+
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        size: 5Gi
+
+      ingress:
+        enabled: true
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        hosts:
+          - grafana.trashstack.dev
+        tls:
+          - secretName: grafana-tls
+            hosts:
+              - grafana.trashstack.dev
+
+      # Load dashboards from grafana.com via the sidecar
+      sidecar:
+        dashboards:
+          enabled: true
+          # Empty: only Grafana's own namespace (monitoring). The chart default ALL needs the ClusterRole.
+          searchNamespace: ""
+
+      dashboardProviders:
+        dashboardproviders.yaml:
+          apiVersion: 1
+          providers:
+            - name: default
+              orgId: 1
+              folder: ""
+              type: file
+              disableDeletion: false
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards/default
+
+      dashboards:
+        default:
+          traefik-kubernetes:
+            gnetId: 17347
+            revision: 9
+            datasource: Prometheus
+          longhorn:
+            gnetId: 17626
+            # Only revision 1 exists on grafana.com
+            revision: 1
+            datasource: Prometheus
+          cert-manager:
+            gnetId: 20842
+            revision: 3
+            datasource: Prometheus

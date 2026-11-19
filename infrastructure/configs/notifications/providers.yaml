@@ -1,0 +1,20 @@
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: discord-alerts
+  namespace: flux-system
+spec:
+  type: discord
+  secretRef:
+    name: flux-discord-alerts
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: discord-audit
+  namespace: flux-system
+spec:
+  type: discord
+  secretRef:
+    name: flux-discord-audit

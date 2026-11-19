@@ -1,0 +1,124 @@
+# kube-system: default deny plus allows.
+# csi-smb runs in the host network; metrics-server and the GPU plugin only get traffic from the node, which
+# kube-router accepts before any policy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: coredns
+  namespace: kube-system
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: kube-dns
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9153
+---
+# ServiceLB (klipper-lb) pods: not hostNetwork, but hold the hostPorts of every LoadBalancer Service and only DNAT them
+# to the NodePorts. Internet and tailnet clients arrive with their own address, so any source on any port.
+# Selecting on the label key (not the value traefik) keeps a future LoadBalancer Service from being blocked silently.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: svclb
+  namespace: kube-system
+spec:
+  podSelector:
+    matchExpressions:
+      - key: svccontroller.k3s.cattle.io/svcname
+        operator: Exists
+  policyTypes:
+    - Ingress
+  ingress:
+    - {}
+---
+# Traefik. web (8000) and websecure (8443) from any source: internet clients keep their address (externalTrafficPolicy
+# Local), the svclb pod masquerades tailnet traffic and pods in every namespace call public hosts through ex44's address.
+# API and dashboard (8080, api.insecure): only Traefik itself (traefik.trashstack.dev) and Homepage's /ping check.
+# Metrics (9100, PodMonitor): Prometheus.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8443
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: homepage
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: homepage
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9100
+---
+# cert-manager HTTP-01 solver for traefik-trashstack-dev-tls, reached through Traefik
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acme-http01-solver
+  namespace: kube-system
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8089
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: kube-system
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

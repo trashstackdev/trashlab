@@ -1,0 +1,20 @@
+# Forgejo's push webhook on trashstackdev/trashlab makes Flux fetch at once instead of waiting for the
+# 1m poll. Type github: Forgejo signs its webhooks GitHub-style (X-Hub-Signature-256, X-GitHub-Event).
+# The webhook calls http://webhook-receiver.flux-system.svc.cluster.local<status.webhookPath> inside the
+# cluster (no Ingress); the secret signs every delivery, so other callers can't trigger it. All it can do
+# is ask for a reconcile of the GitRepository flux-system.
+apiVersion: notification.toolkit.fluxcd.io/v1
+kind: Receiver
+metadata:
+  name: forgejo
+  namespace: flux-system
+spec:
+  type: github
+  events:
+    - push
+  secretRef:
+    name: flux-webhook-token
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      name: flux-system

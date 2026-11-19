@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: longhorn-ui
+  namespace: longhorn-system
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: flux-system-authentik-forward-auth@kubernetescrd
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  rules:
+    - host: longhorn.trashstack.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: longhorn-frontend
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - longhorn.trashstack.dev
+      secretName: longhorn-trashstack-dev-tls

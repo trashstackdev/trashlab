@@ -1,0 +1,31 @@
+# Intel's Dynamic Resource Allocation (DRA) driver: hands ex44's iGPU (UHD 770) to pods that ask for it through
+# a ResourceClaim with deviceClassName gpu.intel.com, without the pod itself running privileged. Used for
+# hardware video transcoding (Quick Sync). Needs Kubernetes 1.34+ (resource.k8s.io/v1) and, on the host,
+# the GPU firmware from the Debian package firmware-intel-graphics.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: intel-gpu-resource-driver
+  namespace: kube-system
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: intel-gpu-resource-driver
+    namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    kubeletPlugin:
+      # Health monitoring needs Intel's xpumd, which isn't installed. Without it the plugin reads the GPU's
+      # details from the device itself, and that needs privileged mode (the plugin only, not the pods using the GPU).
+      healthMonitoring:
+        enabled: false
+      privileged: true
+      # The iGPU only serves containers, never VMs: don't let the driver rebind it to vfio-pci
+      manageBinding:
+        enabled: false

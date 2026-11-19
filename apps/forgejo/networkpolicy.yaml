@@ -1,0 +1,149 @@
+# Flux reads its repo through this namespace. A mistake here that locks out source-controller can't be fixed
+# with a commit: fix it by hand with kubectl, then commit the same fix.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: forgejo
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Traefik for git.trashstack.dev; Flux source-controller for the root GitRepository flux-system
+# (http://forgejo-http.forgejo.svc.cluster.local:3000); the junkyard pod's init container, which clones its
+# release tag the same way (apps/junkyard/); the Actions runner (apps/forgejo-runner/), which
+# fetches jobs and checks out repos the same way; Renovate (apps/renovate/), which clones and opens PRs
+# the same way. Service forgejo-ssh (22 -> 2222) has no listener
+# (DISABLE_SSH, START_SSH_SERVER false), so no rule for it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-forgejo
+  namespace: forgejo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: forgejo
+      app.kubernetes.io/instance: forgejo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app: source-controller
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: junkyard
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: junkyard
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: forgejo-runner
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: forgejo-runner
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: renovate
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: renovate
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+# CNPG cluster forgejo-db: Forgejo on 5432; the CNPG operator on 8000 and 5432; other pods of the same cluster.
+# No PodMonitor exists for forgejo-db (enablePodMonitor: false), so no Prometheus rule (add 9187 together with one).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-database
+  namespace: forgejo
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: forgejo-db
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: forgejo
+              app.kubernetes.io/instance: forgejo
+      ports:
+        - protocol: TCP
+          port: 5432
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 5432
+    - from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: forgejo-db
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 8000
+---
+# cert-manager HTTP-01 solver pods for git-trashstack-dev-tls (next renewal 2027-01-13)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-acme-http01-solver
+  namespace: forgejo
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8089

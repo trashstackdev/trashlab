@@ -1,0 +1,184 @@
+# ForwardAuth proxy provider for Flux UI
+resource "authentik_provider_proxy" "flux_ui" {
+  name                  = "flux-ui"
+  external_host         = "https://flux.trashstack.dev"
+  mode                  = "forward_single"
+  authorization_flow    = data.authentik_flow.implicit_consent.id
+  invalidation_flow     = data.authentik_flow.invalidation.id
+  property_mappings     = data.authentik_property_mapping_provider_scope.proxy_scopes.ids
+  access_token_validity = "hours=24"
+}
+
+# ForwardAuth proxy provider for Longhorn UI
+resource "authentik_provider_proxy" "longhorn_ui" {
+  name                  = "longhorn-ui"
+  external_host         = "https://longhorn.trashstack.dev/"
+  mode                  = "forward_single"
+  authorization_flow    = data.authentik_flow.implicit_consent.id
+  invalidation_flow     = data.authentik_flow.invalidation.id
+  property_mappings     = data.authentik_property_mapping_provider_scope.proxy_scopes.ids
+  access_token_validity = "hours=24"
+}
+
+# ForwardAuth proxy provider for Traefik Dashboard
+resource "authentik_provider_proxy" "traefik_dashboard" {
+  name                  = "traefik-dashboard"
+  external_host         = "https://traefik.trashstack.dev"
+  mode                  = "forward_single"
+  authorization_flow    = data.authentik_flow.implicit_consent.id
+  invalidation_flow     = data.authentik_flow.invalidation.id
+  property_mappings     = data.authentik_property_mapping_provider_scope.proxy_scopes.ids
+  access_token_validity = "hours=24"
+}
+
+# OAuth2/OIDC provider for Grafana
+resource "authentik_provider_oauth2" "grafana" {
+  name               = "Grafana"
+  client_id          = var.grafana_oidc_client_id
+  client_secret      = var.grafana_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.implicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes_with_offline.ids
+  # Only the code flow: the provider default also allows implicit, hybrid, password, client_credentials and device_code
+  grant_types = ["authorization_code", "refresh_token"]
+
+  access_code_validity   = "minutes=1"
+  access_token_validity  = "minutes=5"
+  refresh_token_validity = "days=30"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://grafana.trashstack.dev/login/generic_oauth"
+    }
+  ]
+}
+
+# OAuth2/OIDC provider for Nextcloud
+resource "authentik_provider_oauth2" "nextcloud" {
+  name               = "Nextcloud"
+  client_id          = var.nextcloud_oidc_client_id
+  client_secret      = var.nextcloud_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.explicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+  # Only the code flow: the provider default also allows implicit, hybrid, password, client_credentials and device_code
+  grant_types = ["authorization_code", "refresh_token"]
+
+  access_code_validity    = "minutes=1"
+  access_token_validity   = "minutes=5"
+  refresh_token_validity  = "days=30"
+  refresh_token_threshold = "hours=1"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://cloud.trashstack.dev/apps/user_oidc/code"
+    }
+  ]
+}
+
+# OAuth2/OIDC provider for Immich (web and iOS app)
+resource "authentik_provider_oauth2" "immich" {
+  name               = "Immich"
+  client_id          = var.immich_oidc_client_id
+  client_secret      = var.immich_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.implicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+  # Set explicitly: the provider creates new OAuth2 providers with no grant types, which breaks login
+  grant_types = ["authorization_code", "refresh_token"]
+
+  access_code_validity   = "minutes=1"
+  access_token_validity  = "minutes=5"
+  refresh_token_validity = "days=30"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://photos.trashstack.dev/auth/login"
+    },
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://photos.trashstack.dev/user-settings"
+    },
+    {
+      # Immich mobile app
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "app.immich:///oauth-callback"
+    }
+  ]
+}
+
+# OAuth2/OIDC provider for Dawarich
+resource "authentik_provider_oauth2" "dawarich" {
+  name               = "Dawarich"
+  client_id          = var.dawarich_oidc_client_id
+  client_secret      = var.dawarich_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.implicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+  # Set explicitly: the provider creates new OAuth2 providers with no grant types, which breaks login
+  grant_types = ["authorization_code", "refresh_token"]
+
+  access_code_validity   = "minutes=1"
+  access_token_validity  = "minutes=5"
+  refresh_token_validity = "days=30"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://timeline.trashstack.dev/users/auth/openid_connect/callback"
+    }
+  ]
+}
+
+# OAuth2/OIDC provider for Forgejo
+resource "authentik_provider_oauth2" "forgejo" {
+  name               = "Forgejo"
+  client_id          = var.forgejo_oidc_client_id
+  client_secret      = var.forgejo_oidc_client_secret
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.implicit_consent.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+  signing_key        = data.authentik_certificate_key_pair.self_signed.id
+  sub_mode           = "hashed_user_id"
+  issuer_mode        = "per_provider"
+  property_mappings  = data.authentik_property_mapping_provider_scope.oidc_scopes.ids
+  # Set explicitly: the provider creates new OAuth2 providers with no grant types, which breaks login
+  grant_types = ["authorization_code", "refresh_token"]
+
+  access_code_validity   = "minutes=1"
+  access_token_validity  = "minutes=5"
+  refresh_token_validity = "days=30"
+
+  allowed_redirect_uris = [
+    {
+      matching_mode     = "strict"
+      redirect_uri_type = "authorization"
+      url               = "https://git.trashstack.dev/user/oauth2/authentik/callback"
+    }
+  ]
+}

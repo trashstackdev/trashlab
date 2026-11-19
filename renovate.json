@@ -1,0 +1,135 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "kubernetes": {
+    "managerFilePatterns": [
+      "/apps/nextcloud/valkey\\.yaml$/",
+      "/apps/forgejo-runner/deployment\\.yaml$/",
+      "/apps/renovate/cronjob\\.yaml$/"
+    ]
+  },
+  "flux": {
+    "managerFilePatterns": [
+      "/\\.yaml$/"
+    ]
+  },
+  "packageRules": [
+    {
+      "description": "Group Flux component updates",
+      "matchPackageNames": ["ghcr.io/fluxcd/**"],
+      "groupName": "flux"
+    },
+    {
+      "description": "Group all non-major updates into one PR",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "all non-major updates",
+      "groupSlug": "non-major"
+    },
+    {
+      "description": "Require manual approval for major chart version bumps",
+      "matchManagers": ["flux"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Limit Longhorn to one minor version bump at a time",
+      "matchPackageNames": ["longhorn"],
+      "matchManagers": ["flux"],
+      "matchDatasources": ["helm"],
+      "allowedVersions": "<={{major}}.{{add minor 1}}"
+    },
+    {
+      "description": "Immich (server image and chart) gets its own PR: releases often carry breaking changes",
+      "matchPackageNames": ["ghcr.io/immich-app/**", "immich-app/immich"],
+      "groupName": "immich",
+      "prBodyNotes": [
+        "Read the Immich release notes for breaking changes and check the latest Longhorn backup of `immich-db` before merging."
+      ]
+    },
+    {
+      "description": "Photon gets its own PR: a new Photon version can need a fresh index",
+      "matchPackageNames": ["rtuszik/photon-docker"],
+      "groupName": "photon",
+      "prBodyNotes": [
+        "After merging, check that the `photon` pod turns ready. If Photon rejects the old index, delete the `photon-data` PVC and then the pod so it imports again (several hours, Dawarich geocoding pauses meanwhile)."
+      ]
+    },
+    {
+      "description": "Dawarich gets its own PR: updates have broken instances before",
+      "matchPackageNames": ["freikin/dawarich"],
+      "groupName": "dawarich",
+      "prBodyNotes": [
+        "Read the Dawarich release notes for breaking changes and check the latest Longhorn backup of `dawarich-db` before merging."
+      ]
+    },
+    {
+      "description": "Immich, Dawarich and Photon: no PR until a release is 3 days old, so upstream regressions in fresh releases get found first (Immich 3.4.2 broke its metrics on 2026-11-19). Needs release dates: Docker Hub has them, ghcr.io doesn't, so Immich's version comes from its GitHub releases.",
+      "matchPackageNames": ["immich-app/immich", "freikin/dawarich", "rtuszik/photon-docker"],
+      "minimumReleaseAge": "3 days",
+      "internalChecksFilter": "strict"
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Nextcloud image tag",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/apps/nextcloud/helmrelease\\.yaml/"
+      ],
+      "matchStrings": [
+        "tag: (?<currentValue>[\\d.]+-apache)"
+      ],
+      "depNameTemplate": "nextcloud",
+      "datasourceTemplate": "docker",
+      "registryUrlTemplate": "https://index.docker.io"
+    },
+    {
+      "description": "Immich image tag (the chart does not follow Immich releases). Versions come from Immich's GitHub releases, which carry release dates (ghcr.io doesn't), so minimumReleaseAge works; the tag on ghcr.io is the same.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/apps/immich/helmrelease\\.yaml/"
+      ],
+      "matchStrings": [
+        "tag: (?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "immich-app/immich",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "description": "Dawarich image tag",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/apps/dawarich/helmrelease\\.yaml/"
+      ],
+      "matchStrings": [
+        "repository: freikin/dawarich\\s+tag: (?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "freikin/dawarich",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "Grafana image tag, pinned ahead of kube-prometheus-stack's subchart for security releases",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/infrastructure/controllers/kube-prometheus-stack/helmrelease\\.yaml/"
+      ],
+      "matchStrings": [
+        "repository: grafana/grafana\\s+tag: (?<currentValue>\\d+\\.\\d+\\.\\d+-distroless)"
+      ],
+      "depNameTemplate": "grafana/grafana",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "Traefik image tag, pinned ahead of the chart's appVersion for security releases",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/infrastructure/controllers/traefik/helmrelease\\.yaml/"
+      ],
+      "matchStrings": [
+        "repository: traefik\\s+tag: (?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "traefik",
+      "datasourceTemplate": "docker"
+    }
+  ]
+}

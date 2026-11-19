@@ -1,0 +1,42 @@
+# Nextcloud's database on CloudNativePG, replacing the Bitnami postgresql subchart (bitnamilegacy images,
+# no updates). Same database, owner and password as before (Bitwarden), so the switch only changes dbhost.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: nextcloud-db
+  namespace: nextcloud
+spec:
+  instances: 1
+  storage:
+    size: 8Gi
+    storageClass: longhorn
+  bootstrap:
+    initdb:
+      database: nextcloud
+      owner: nextcloud
+      secret:
+        name: nextcloud-cnpg-db
+  enableSuperuserAccess: false
+  # Offsite backup (backup.yaml): k8up stores a pg_dump from the instance pod instead of the live data volume.
+  # CNPG copies these annotations to the instance pods and PVCs; k8up reads k8up.io/backup only on PVCs
+  # and the dump command only on pods.
+  inheritedMetadata:
+    annotations:
+      k8up.io/backup: "false"
+      k8up.io/backupcommand: sh -c 'pg_dump -d nextcloud --clean --if-exists'
+      k8up.io/backupcommand-container: postgres
+      k8up.io/file-extension: .sql
+---
+# Scrape the CNPG instance (port metrics, 9187)
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: nextcloud-db
+  namespace: nextcloud
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: nextcloud-db
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics

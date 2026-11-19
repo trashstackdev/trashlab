@@ -1,0 +1,27 @@
+# forgejo-runner configuration (forgejo-runner generate-config prints every option)
+log:
+  level: info
+  job_level: info
+runner:
+  capacity: 1
+  timeout: 1h
+  shutdown_timeout: 10m
+  fetch_interval: 5s
+  # Host mode: steps run inside the runner container itself, with the tools of the flux-local image
+  # (git, flux-local, flux, helm, kustomize) plus gitleaks. No Docker, so no container jobs and no
+  # JavaScript actions (no node): workflows use plain run steps.
+  labels:
+    - trashlab:host
+# The cache server would listen on a port inside the pod; nothing here uses actions/cache
+cache:
+  enabled: false
+host:
+  workdir_parent: /home/runner/work
+server:
+  connections:
+    forgejo:
+      # Cluster-internal Service, as for Flux and the junkyard init container
+      url: http://forgejo-http.forgejo.svc.cluster.local:3000/
+      # Not a secret: hex of the token's first 16 characters (the runner's identifier)
+      uuid: <id>
+      token_url: file:/secrets/token

@@ -1,0 +1,100 @@
+# vmalert: alert rules on logs. It runs LogsQL queries against VictoriaLogs (pod logs and ex44's journal, see
+# ../victoria-logs) and sends what matches to the kube-prometheus-stack Alertmanager, which posts to Discord.
+# Prometheus can't see these events, it only has numbers. Metric-based security alerts live with the other
+# PrometheusRules in apps/monitoring/prometheusrules.yaml.
+#
+# vmalert adds "_time:<group interval>" to every expression, so each evaluation looks at the logs since the
+# previous one. Alerts labelled kind: event are one-off events (a login, a new USB device): Alertmanager sends
+# them once and never a "resolved" message (route in ../kube-prometheus-stack/helmrelease.yaml).
+# Thresholds were checked against 7 days of logs on 2026-11-15.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vmalert
+  namespace: monitoring
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: victoria-metrics-alert
+      version: 0.53.0
+      sourceRef:
+        kind: HelmRepository
+        # Defined in ../victoria-logs/helmrepository.yaml
+        name: victoriametrics
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    server:
+      datasource:
+        url: http://victoria-logs.monitoring.svc:9428
+      notifier:
+        url: http://kube-prometheus-stack-alertmanager.monitoring.svc:9093
+      extraArgs:
+        # Expressions are LogsQL, not PromQL
+        rule.defaultRuleType: vlogs
+        # Link target of the alerts' source field
+        external.url: https://grafana.trashstack.dev
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+      config:
+        alerts:
+          groups:
+            - name: ex44-events
+              interval: 5m
+              rules:
+                # Every SSH login, once per user and source address. A login nobody remembers is the signal.
+                - alert: SSHLogin
+                  expr: '_SYSTEMD_UNIT:ssh.service "Accepted" | extract "Accepted <method> for <user> from <ip> port " | stats by (user, ip, method) count() as logins'
+                  labels:
+                    severity: warning
+                    kind: event
+                  annotations:
+                    summary: "SSH login on ex44: {{ $labels.user }} from {{ $labels.ip }} ({{ $labels.method }})"
+                    description: "If this login wasn't expected, check `last` on ex44 and the source address."
+                - alert: SudoOrSuFailure
+                  expr: '(SYSLOG_IDENTIFIER:sudo OR SYSLOG_IDENTIFIER:su) ("authentication failure" OR "incorrect password" OR "NOT in sudoers" OR "command not allowed" OR "FAILED SU") | stats by (SYSLOG_IDENTIFIER) count() as failures'
+                  labels:
+                    severity: warning
+                    kind: event
+                  annotations:
+                    summary: "{{ $value }} failed {{ $labels.SYSLOG_IDENTIFIER }} attempt(s) on ex44"
+                    description: "A wrong password or a forbidden command. Details: SYSLOG_IDENTIFIER:{{ $labels.SYSLOG_IDENTIFIER }} in VictoriaLogs."
+                - alert: HostAccountChanged
+                  expr: 'SYSLOG_IDENTIFIER:in(useradd, usermod, userdel, groupadd, groupmod, groupdel, gpasswd, passwd, chpasswd, chage) | stats by (SYSLOG_IDENTIFIER) count() as changes'
+                  labels:
+                    severity: warning
+                    kind: event
+                  annotations:
+                    summary: "A user or group on ex44 was changed ({{ $labels.SYSLOG_IDENTIFIER }})"
+                    description: "New users, group changes and password changes on the host. Details: SYSLOG_IDENTIFIER:{{ $labels.SYSLOG_IDENTIFIER }} in VictoriaLogs."
+                # USB devices found more than 10 minutes after boot. ex44's own devices all appear at boot; a remote
+                # console (Hetzner's KVM) or anything plugged in later shows up here.
+                - alert: USBDeviceWhileRunning
+                  expr: 'SYSLOG_IDENTIFIER:kernel "New USB device found" _SOURCE_MONOTONIC_TIMESTAMP:>600000000 | extract "usb <port>: New USB device found, idVendor=<vendor>, idProduct=<product>," | stats by (port, vendor, product) count() as devices'
+                  labels:
+                    severity: critical
+                    kind: event
+                  annotations:
+                    summary: "USB device {{ $labels.vendor }}:{{ $labels.product }} appeared on ex44 while running"
+                    description: "Usually a remote console (KVM) attached by Hetzner or a technician at the server. Unexpected? Ask Hetzner support."
+            - name: ex44-spikes
+              interval: 15m
+              rules:
+                # Scanners try about 10 SSH logins per 15 minutes; the busiest source did 163 in a week. Login is key-only.
+                - alert: SSHBruteForce
+                  expr: '_SYSTEMD_UNIT:ssh.service ("Invalid user" OR "authenticating user" OR "Failed password" OR "Failed publickey") | extract_regexp "(?P<ip>[0-9a-f:.]+) port [0-9]+" | stats by (ip) count() as attempts | filter attempts:>100'
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: "{{ $labels.ip }} tried {{ $value }} SSH logins on ex44 in 15 minutes"
+                    description: "Key-only login makes guessing useless, but this is a targeted attempt, not background scanning."

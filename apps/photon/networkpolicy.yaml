@@ -1,0 +1,36 @@
+# Photon has one client: Dawarich (PHOTON_API_HOST=photon.photon.svc.cluster.local:2322). No Ingress, no metrics.
+# Its embedded OpenSearch (9201, 9300) listens on loopback only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: photon
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dawarich
+  namespace: photon
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: photon
+      app.kubernetes.io/controller: photon
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: dawarich
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: dawarich
+              app.kubernetes.io/controller: dawarich
+      ports:
+        - protocol: TCP
+          port: 2322

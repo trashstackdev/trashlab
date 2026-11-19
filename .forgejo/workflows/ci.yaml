@@ -1,0 +1,67 @@
+# CI on the Forgejo Actions runner trashlab (apps/forgejo-runner/). The runner works in host mode in the
+# flux-local image without node, so steps are plain sh and the checkout is git by hand over Forgejo's
+# cluster-internal Service with the job token. Both jobs always run and are required checks on main.
+# No Actions secrets in this repo: every job can read what the runner can.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: sh
+
+jobs:
+  flux-local:
+    name: Flux Local
+    runs-on: trashlab
+    steps:
+      - name: Checkout
+        env:
+          TOKEN: ${{ forgejo.token }}
+          REPO: ${{ forgejo.repository }}
+          REF: ${{ forgejo.ref }}
+          SHA: ${{ forgejo.sha }}
+        run: |
+          set -eu
+          git init -q .
+          git remote add origin "http://forgejo-http.forgejo.svc.cluster.local:3000/$REPO.git"
+          git -c credential.helper='!f() { echo username=ci; echo "password=$TOKEN"; }; f' \
+            fetch -q --no-tags origin "+$REF:refs/remotes/origin/ci" "+refs/heads/main:refs/remotes/origin/main"
+          git checkout -q --detach "$SHA"
+          git log --oneline -1
+
+      - name: Test the cluster with flux-local
+        run: >-
+          flux-local test
+          --all-namespaces
+          --enable-helm
+          --path clusters/trashlab
+          --sources flux-system
+          --verbose
+
+  gitleaks:
+    name: Gitleaks
+    runs-on: trashlab
+    steps:
+      - name: Checkout
+        env:
+          TOKEN: ${{ forgejo.token }}
+          REPO: ${{ forgejo.repository }}
+          REF: ${{ forgejo.ref }}
+          SHA: ${{ forgejo.sha }}
+        run: |
+          set -eu
+          git init -q .
+          git remote add origin "http://forgejo-http.forgejo.svc.cluster.local:3000/$REPO.git"
+          git -c credential.helper='!f() { echo username=ci; echo "password=$TOKEN"; }; f' \
+            fetch -q --no-tags origin "+$REF:refs/remotes/origin/ci" "+refs/heads/main:refs/remotes/origin/main"
+          git checkout -q --detach "$SHA"
+          git log --oneline -1
+
+      # The whole history of every fetched ref, with the allowlist in .gitleaks.toml
+      - name: Scan the history for secrets
+        run: gitleaks git --no-banner --redact --log-opts="--all" .

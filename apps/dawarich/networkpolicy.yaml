@@ -1,0 +1,137 @@
+# The app pod and the redis pod share app.kubernetes.io/name and instance: select them by app.kubernetes.io/controller.
+# The containers declare no ports, so the rules use numbers.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: dawarich
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Traefik for timeline.trashstack.dev (web UI, iOS app uploads, the API that dw.py uses)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app
+  namespace: dawarich
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: dawarich
+      app.kubernetes.io/controller: dawarich
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+# The app pod (Puma and Sidekiq, REDIS_URL=redis://dawarich-redis:6379)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis
+  namespace: dawarich
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: dawarich
+      app.kubernetes.io/controller: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: dawarich
+              app.kubernetes.io/controller: dawarich
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+# CNPG cluster dawarich-db: the app pod on 5432; the CNPG operator on 8000 and 5432; other pods of the same
+# cluster; Prometheus: PodMonitor dawarich-db (9187). k8up's pg_dump runs through pods/exec and needs no rule.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-database
+  namespace: dawarich
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: dawarich-db
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: dawarich
+              app.kubernetes.io/controller: dawarich
+      ports:
+        - protocol: TCP
+          port: 5432
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 5432
+    - from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: dawarich-db
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 8000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9187
+---
+# cert-manager HTTP-01 solver pods for timeline-trashstack-dev-tls (next renewal 2027-01-13)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-acme-http01-solver
+  namespace: dawarich
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8089

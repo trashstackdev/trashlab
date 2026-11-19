@@ -1,0 +1,118 @@
+# One Forgejo Actions runner for the CI of trashstackdev's repos (flux-local, gitleaks).
+# No image of its own: the runner runs in the flux-local image, and init containers copy the static
+# forgejo-runner and gitleaks binaries in from their upstream images. Renovate bumps all three.
+# Unprivileged (Pod Security restricted), so no Docker-in-Docker: jobs run in host mode in this container.
+# What a job can reach: the token file below (it can act as this runner), the internet and cluster Services
+# that admit every namespace. It gets no Kubernetes API token.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo-runner
+  namespace: forgejo-runner
+  labels:
+    app.kubernetes.io/name: forgejo-runner
+  annotations:
+    secret.reloader.stakater.com/reload: forgejo-runner-token
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: forgejo-runner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: forgejo-runner
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: copy-forgejo-runner
+          image: code.forgejo.org/forgejo/runner:13.2.1
+          command: ["cp", "/bin/forgejo-runner", "/tools/forgejo-runner"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+        - name: copy-gitleaks
+          image: ghcr.io/gitleaks/gitleaks:v8.30.1
+          command: ["cp", "/usr/bin/gitleaks", "/tools/gitleaks"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+      containers:
+        - name: runner
+          image: ghcr.io/allenporter/flux-local:v8.4.0
+          command: ["/tools/forgejo-runner", "daemon", "--config", "/config/config.yaml"]
+          workingDir: /home/runner
+          env:
+            - name: HOME
+              value: /home/runner
+            - name: PATH
+              value: /tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: token
+              mountPath: /secrets
+              readOnly: true
+            - name: tools
+              mountPath: /tools
+              readOnly: true
+            - name: home
+              mountPath: /home/runner
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: forgejo-runner-config
+        - name: token
+          secret:
+            secretName: forgejo-runner-token
+            defaultMode: 0440
+            items:
+              - key: token
+                path: token
+        - name: tools
+          emptyDir:
+            sizeLimit: 256Mi
+        # Workspaces, Helm chart downloads and git checkouts; emptied on every restart
+        - name: home
+          emptyDir:
+            sizeLimit: 4Gi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi

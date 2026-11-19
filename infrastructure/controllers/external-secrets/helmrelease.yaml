@@ -1,0 +1,35 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-secrets
+  namespace: external-secrets
+spec:
+  interval: 1h
+  releaseName: external-secrets
+  timeout: 10m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: external-secrets
+      version: 2.15.0
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: external-secrets
+        namespace: flux-system
+  values:
+    # Metrics for the ExternalSecretNotSynced alert
+    serviceMonitor:
+      enabled: true
+    bitwarden-sdk-server:
+      enabled: true
+      # Restart when cert-manager renews the TLS cert: the server only reads it at startup
+      deploymentAnnotations:
+        secret.reloader.stakater.com/reload: bitwarden-tls-certs
